@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>운빨겜!</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="topbar" class="topbar">
+      <button id="backBtn" class="btn btn-white" hidden>&larr;</button>
+
+      <div class="titleWrap">
+        <div id="topTitle" class="topTitle">운빨겜!</div>
+        <div id="topSub" class="topSub" hidden></div>
+      </div>
+
+      <div id="currency" class="currency">
+        <span class="muted">크리스탈:</span>
+        <span id="gemsVal" class="gemsVal">0</span>
+      </div>
+    </header>
+
+    <main id="screenRoot" class="screenRoot"></main>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <div id="rewardOverlay" class="overlay" hidden>
+      <div class="rewardCard">
+        <div class="rewardEmoji">💎</div>
+        <div id="rewardText" class="rewardText"></div>
+        <div class="rewardHint">클릭해서 닫기</div>
+      </div>
+    </div>
+
+    <div id="inlineConfirm" class="overlay" hidden>
+      <div class="confirmCard">
+        <div id="confirmTitle" class="confirmTitle"></div>
+        <div id="confirmDesc" class="confirmDesc"></div>
+        <div class="confirmBtns">
+          <button id="confirmYes" class="btn btn-white">예</button>
+          <button id="confirmNo" class="btn btn-white">아니요</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
