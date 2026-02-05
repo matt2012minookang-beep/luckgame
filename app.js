@@ -36,16 +36,19 @@ document.addEventListener("DOMContentLoaded", () => {
     gemsVal.textContent = String(state.gems);
   }
 
+  // ✅ 보상 오버레이: class로만 표시
   function showReward(text) {
     rewardText.textContent = text;
-    rewardOverlay.hidden = false;
+    rewardOverlay.hidden = false;            // 접근성용
+    rewardOverlay.classList.add("is-open");  // 실제 표시
   }
 
   function hideReward() {
+    rewardOverlay.classList.remove("is-open");
     rewardOverlay.hidden = true;
   }
 
-  // ✅ 확인창: CSS class로만 제어 (초기엔 항상 숨김)
+  // ✅ 확인창: class로만 표시
   function openConfirm(title, desc, onYes) {
     confirmTitle.textContent = title;
     confirmDesc.textContent = desc;
@@ -61,10 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
     state.confirmYesHandler = null;
   }
 
-  // ✅ 시작할 때 무조건 닫아버림 (혹시 남아있어도)
+  // ✅ 시작할 때 무조건 닫아버림
   closeConfirm();
   hideReward();
 
+  // ---- 이벤트 ----
   backBtn.addEventListener("click", () => {
     if (state.prev.length === 0) return;
     state.screen = state.prev.pop();
@@ -72,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   rewardOverlay.addEventListener("click", () => hideReward());
+
   confirmNo.addEventListener("click", () => closeConfirm());
 
   confirmYes.addEventListener("click", () => {
@@ -82,6 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // ---- 화면 렌더 ----
   function clear() {
     screenRoot.innerHTML = "";
   }
@@ -133,6 +139,8 @@ document.addEventListener("DOMContentLoaded", () => {
     col.className = "centerCol";
 
     const p = panel();
+
+    // ✅ 테스트: 확인창 동작 확인
     p.appendChild(
       btn("상점(테스트)", () => {
         openConfirm("테스트 확인창", "예/아니요가 동작하면 성공!", () => {
@@ -141,6 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
       })
     );
 
+    // ✅ 테스트: 크리스탈 증가
     p.appendChild(
       btn("크리스탈 +10(테스트)", () => {
         state.gems += 10;
@@ -155,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function render() {
     updateGems();
-    // 혹시 화면 전환 시 남아있으면 무조건 닫기
+    // 화면 전환 시 혹시 남아있으면 무조건 닫기
     closeConfirm();
     hideReward();
 
