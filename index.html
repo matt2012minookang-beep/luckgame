@@ -9,7 +9,7 @@
 <body>
 
   <!-- 상단 바 -->
-  <div class="topBar">
+  <div class="topBar" id="topBar">
     <div class="left">
       <button id="backBtn" class="btn small" hidden>←</button>
       <div class="titles">
@@ -20,10 +20,10 @@
     <div class="gems">크리스탈: <span id="gemsVal">0</span></div>
   </div>
 
-  <!-- 메인 화면 -->
+  <!-- 화면 루트 -->
   <div id="screenRoot" class="screenRoot"></div>
 
-  <!-- ✅ 보상 오버레이 (잔상 문제 완전 해결 구조) -->
+  <!-- 보상 오버레이 -->
   <div id="rewardOverlay" class="overlay" hidden>
     <div class="overlayCard">
       <div class="emoji">💎</div>
@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  <!-- ✅ 확인창 (예 / 아니요) -->
+  <!-- 확인창 (예/아니요) -->
   <div id="inlineConfirm" class="confirmOverlay" hidden>
     <div class="confirmCard">
       <div id="confirmTitle" class="confirmTitle"></div>
