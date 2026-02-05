@@ -1,4 +1,4 @@
-/* ===== 기본 리셋 ===== */
+/* ===== 리셋 ===== */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -29,11 +29,6 @@ html, body {
   gap: 12px;
 }
 
-.titles {
-  display: flex;
-  flex-direction: column;
-}
-
 .topTitle {
   font-size: 18px;
   font-weight: bold;
@@ -46,7 +41,6 @@ html, body {
 
 .gems {
   font-size: 14px;
-  opacity: 0.9;
 }
 
 /* ===== 버튼 ===== */
@@ -68,11 +62,7 @@ html, body {
   color: #000000;
 }
 
-.btn-white:hover {
-  background: #e6e6e6;
-}
-
-/* ===== 메인 화면 ===== */
+/* ===== 메인 ===== */
 .screenRoot {
   width: 100%;
   height: calc(100% - 56px);
@@ -94,7 +84,6 @@ html, body {
   opacity: 0.85;
 }
 
-/* ===== 패널 ===== */
 .panel {
   width: 520px;
   max-width: 90vw;
@@ -108,7 +97,6 @@ html, body {
 }
 
 /* ===== 보상 오버레이 ===== */
-/* 🔥 기본은 무조건 숨김 */
 #rewardOverlay {
   display: none !important;
 }
@@ -134,11 +122,6 @@ html, body {
   text-align: center;
 }
 
-.overlayCard .emoji {
-  font-size: 64px;
-  margin-bottom: 12px;
-}
-
 .overlayText {
   font-size: 16px;
   margin-bottom: 10px;
@@ -149,8 +132,7 @@ html, body {
   opacity: 0.6;
 }
 
-/* ===== 확인창 (예/아니요) ===== */
-/* 🔥 기본은 무조건 숨김 */
+/* ===== 확인창 ===== */
 #inlineConfirm {
   display: none !important;
 }
