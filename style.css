@@ -13,6 +13,15 @@ html, body {
   color: #ffffff;
 }
 
+/* ===== 테마(스크린 배경) ===== */
+:root{
+  --bg-main: #0b3b1a;   /* 메인 기본: 초록 */
+  --bg-shop: #1f5fbf;   /* 상점 기본: 파랑 */
+  --bg-box:  #ff6fb2;   /* 뽑기 기본: 핑크 */
+  --bg-equip:#0b3b1a;   /* 장비 기본: 초록 */
+  --bg-luck: #6a2bbf;   /* 서버럭 활성 시(메인/상점/뽑기만): 보라 */
+}
+
 /* ===== 상단 바 ===== */
 .topBar {
   height: 56px;
@@ -29,6 +38,11 @@ html, body {
   gap: 12px;
 }
 
+.titles {
+  display: flex;
+  flex-direction: column;
+}
+
 .topTitle {
   font-size: 18px;
   font-weight: bold;
@@ -36,11 +50,13 @@ html, body {
 
 .topSub {
   font-size: 12px;
-  opacity: 0.7;
+  opacity: 0.75;
+  margin-top: 2px;
 }
 
 .gems {
   font-size: 14px;
+  opacity: 0.95;
 }
 
 /* ===== 버튼 ===== */
@@ -62,7 +78,26 @@ html, body {
   color: #000000;
 }
 
-/* ===== 메인 ===== */
+.btn-white:hover {
+  background: #e6e6e6;
+}
+
+.btn-ghost {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.35);
+}
+
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+.btn-yellow {
+  background: #ffe34a;
+  color: #000;
+}
+
+/* ===== 화면 ===== */
 .screenRoot {
   width: 100%;
   height: calc(100% - 56px);
@@ -71,39 +106,370 @@ html, body {
   justify-content: center;
 }
 
+.screen {
+  width: 100%;
+  height: 100%;
+  padding: 18px;
+}
+
 .centerCol {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
 }
 
 .bigTitle {
-  font-size: 32px;
-  font-weight: bold;
-  opacity: 0.85;
+  font-size: 34px;
+  font-weight: 900;
+  margin-top: 90px;
+  margin-bottom: 22px;
+  opacity: 0.9;
 }
 
+/* ===== 카드/패널 ===== */
 .panel {
-  width: 520px;
-  max-width: 90vw;
-  padding: 28px;
+  width: 620px;
+  max-width: 92vw;
+  padding: 22px;
   border-radius: 18px;
   border: 2px solid rgba(255,255,255,0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
+  background: rgba(0,0,0,0.10);
 }
 
-/* ===== 보상 오버레이 ===== */
-#rewardOverlay {
-  display: none !important;
+.row {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
 }
 
-#rewardOverlay.is-open {
-  display: flex !important;
+.card {
+  width: 280px;
+  height: 190px;
+  border-radius: 16px;
+  border: 3px solid rgba(255,255,255,0.75);
+  background: rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
 }
+
+.card:hover {
+  background: rgba(0,0,0,0.18);
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  opacity: 0.95;
+}
+
+.cardPrice {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.emojiBig {
+  font-size: 60px;
+  margin-bottom: 6px;
+}
+
+.notice {
+  margin-top: 12px;
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+/* ===== 업그레이드 화면(탭/상자) ===== */
+.upWrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stageTitle {
+  font-size: 26px;
+  font-weight: 900;
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+.tapHint {
+  font-size: 16px;
+  font-weight: 900;
+  opacity: 0.95;
+  margin-top: 6px;
+}
+
+.clickArea {
+  width: min(780px, 94vw);
+  height: min(560px, 68vh);
+  border-radius: 18px;
+  border: 3px solid rgba(255,255,255,0.75);
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.dots {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  opacity: 0.95;
+}
+
+.boxEmoji {
+  font-size: 92px;
+}
+
+.boxEmoji.openReady {
+  font-size: 126px;
+}
+
+.two {
+  display: flex;
+  gap: 24px;
+}
+
+/* ===== 장비 화면 ===== */
+.equipTopTabs {
+  width: min(860px, 96vw);
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;   /* 조금 위로 */
+  margin-bottom: 10px;
+}
+
+.tabBtn {
+  width: 140px;
+  padding: 10px 0;
+  border-radius: 14px;
+  border: 3px solid rgba(255,255,255,0.75);
+  background: rgba(0,0,0,0.12);
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.tabBtn.active {
+  background: rgba(255,255,255,0.18);
+}
+
+.equipScroll {
+  width: min(860px, 96vw);
+  height: calc(100% - 120px);
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 18px;
+  border: 2px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.10);
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.slotCard {
+  height: 160px;
+  border-radius: 18px;
+  border: 3px solid rgba(255,255,255,0.75);
+  background: rgba(0,0,0,0.12);
+  padding: 10px;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.slotCard:hover {
+  background: rgba(0,0,0,0.18);
+}
+
+.levelBadge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-weight: 900;
+  font-size: 16px;
+  opacity: 0.95;
+}
+
+.maxBadge {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: 900;
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+.bigBox {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  border: 3px solid rgba(255,255,255,0.0); /* 버튼 테두리는 카드가 흰색 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.innerBlack {
+  width: 50%;
+  height: 50%;
+  background: #000;
+  border: 2px solid #000;
+}
+
+.charName {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: 900;
+}
+
+/* 캐릭터 상세 */
+.charDetail {
+  width: min(860px, 96vw);
+  height: calc(100% - 12px);
+  border-radius: 18px;
+  border: 3px solid rgba(255,255,255,0.75);
+  background: rgba(0,0,0,0.12);
+  padding: 16px;
+  position: relative;
+}
+
+.charHeaderLine{
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.charHeaderMain{
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.charHeaderSub{
+  font-size: 12px;
+  opacity: 0.75;
+  font-weight: 900;
+}
+
+.charBigEmojiBox{
+  width: 260px;
+  height: 260px;
+  border-radius: 18px;
+  border: 3px solid rgba(255,255,255,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.charBigEmoji{
+  width: 150px;
+  height: 150px;
+  background: #000;
+  border: 2px solid #000;
+}
+
+.charStatsRight{
+  position: absolute;
+  top: 84px;
+  right: 18px;
+  width: 260px;
+  text-align: left;
+}
+
+.statRow{
+  font-weight: 900;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.charLevelLine{
+  font-weight: 900;
+  margin-bottom: 10px;
+  opacity: 0.95;
+}
+
+.upgradeBtn{
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 900;
+  cursor: pointer;
+  background: #ffffff;
+  color: #000;
+}
+
+.upgradeBtn:disabled{
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.inlineAsk{
+  position: absolute;
+  left: 18px;
+  right: 320px;
+  bottom: 18px;
+  border-radius: 16px;
+  border: 3px solid rgba(255,255,255,0.75);
+  background: rgba(0,0,0,0.18);
+  padding: 14px;
+}
+
+.inlineAskTitle{
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.inlineAskDesc{
+  opacity: 0.9;
+  font-weight: 900;
+  margin-bottom: 12px;
+}
+
+.inlineAskBtns{
+  display: flex;
+  gap: 10px;
+}
+
+/* ===== 오버레이 ===== */
+#rewardOverlay { display: none !important; }
+#rewardOverlay.is-open { display: flex !important; }
+
+#inlineConfirm { display: none !important; }
+#inlineConfirm.is-open { display: flex !important; }
 
 .overlay {
   position: fixed;
@@ -122,23 +488,20 @@ html, body {
   text-align: center;
 }
 
+.overlayCard .emoji {
+  font-size: 64px;
+  margin-bottom: 12px;
+}
+
 .overlayText {
   font-size: 16px;
   margin-bottom: 10px;
+  font-weight: 900;
 }
 
 .overlayHint {
   font-size: 12px;
   opacity: 0.6;
-}
-
-/* ===== 확인창 ===== */
-#inlineConfirm {
-  display: none !important;
-}
-
-#inlineConfirm.is-open {
-  display: flex !important;
 }
 
 .confirmOverlay {
@@ -162,7 +525,7 @@ html, body {
 
 .confirmTitle {
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 900;
   margin-bottom: 10px;
 }
 
@@ -170,6 +533,7 @@ html, body {
   font-size: 14px;
   opacity: 0.85;
   margin-bottom: 20px;
+  font-weight: 900;
 }
 
 .confirmBtns {
