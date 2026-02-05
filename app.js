@@ -1,4 +1,3 @@
-// ✅ 아주 안전한 최소 동작 버전(버튼/화면 전환 100% 보장)
 document.addEventListener("DOMContentLoaded", () => {
   const screenRoot = document.getElementById("screenRoot");
   const backBtn = document.getElementById("backBtn");
@@ -15,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmYes = document.getElementById("confirmYes");
   const confirmNo = document.getElementById("confirmNo");
 
-  // ---- 상태 ----
   const state = {
     screen: "title",
     prev: [],
@@ -47,19 +45,26 @@ document.addEventListener("DOMContentLoaded", () => {
     rewardOverlay.hidden = true;
   }
 
+  // ✅ 확인창: CSS class로만 제어 (초기엔 항상 숨김)
   function openConfirm(title, desc, onYes) {
     confirmTitle.textContent = title;
     confirmDesc.textContent = desc;
     state.confirmYesHandler = onYes;
-    inlineConfirm.hidden = false;
+
+    inlineConfirm.hidden = false;              // 접근성용
+    inlineConfirm.classList.add("is-open");    // 실제 표시
   }
 
   function closeConfirm() {
+    inlineConfirm.classList.remove("is-open");
     inlineConfirm.hidden = true;
     state.confirmYesHandler = null;
   }
 
-  // ---- 이벤트 연결(여기가 핵심) ----
+  // ✅ 시작할 때 무조건 닫아버림 (혹시 남아있어도)
+  closeConfirm();
+  hideReward();
+
   backBtn.addEventListener("click", () => {
     if (state.prev.length === 0) return;
     state.screen = state.prev.pop();
@@ -67,7 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   rewardOverlay.addEventListener("click", () => hideReward());
-
   confirmNo.addEventListener("click", () => closeConfirm());
 
   confirmYes.addEventListener("click", () => {
@@ -78,7 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ---- 화면 렌더 ----
   function clear() {
     screenRoot.innerHTML = "";
   }
@@ -130,32 +133,38 @@ document.addEventListener("DOMContentLoaded", () => {
     col.className = "centerCol";
 
     const p = panel();
-    p.appendChild(btn("상점(테스트)", () => {
-      openConfirm("테스트 확인창", "예/아니요가 동작하면 성공!", () => {
-        showReward("✅ 예 버튼이 정상 동작했어!");
-      });
-    }));
-    p.appendChild(btn("크리스탈 +10(테스트)", () => {
-      state.gems += 10;
-      updateGems();
-      showReward("크리스탈 10개를 획득했습니다!");
-    }));
-    col.appendChild(p);
+    p.appendChild(
+      btn("상점(테스트)", () => {
+        openConfirm("테스트 확인창", "예/아니요가 동작하면 성공!", () => {
+          showReward("✅ 예 버튼이 정상 동작했어!");
+        });
+      })
+    );
 
+    p.appendChild(
+      btn("크리스탈 +10(테스트)", () => {
+        state.gems += 10;
+        updateGems();
+        showReward("크리스탈 10개를 획득했습니다!");
+      })
+    );
+
+    col.appendChild(p);
     screenRoot.appendChild(col);
   }
 
   function render() {
     updateGems();
+    // 혹시 화면 전환 시 남아있으면 무조건 닫기
+    closeConfirm();
+    hideReward();
 
     if (state.screen === "title") return renderTitle();
     if (state.screen === "game") return renderGame();
 
-    // fallback
     state.screen = "title";
     return renderTitle();
   }
 
-  // 시작
   render();
 });
