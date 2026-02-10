@@ -2,26 +2,41 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>운빨겜!</title>
+  <title>운빨겜</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="appRoot"></div>
 
-  <!-- ✅ 보상 오버레이 (RewardPopup) -->
+  <!-- 상단 바 -->
+  <div class="topBar">
+    <div class="left">
+      <button id="backBtn" class="btn small" hidden>←</button>
+      <div class="titles">
+        <div id="topTitle" class="topTitle">운빨겜!</div>
+        <div id="topSub" class="topSub" hidden></div>
+      </div>
+    </div>
+    <div class="gems">크리스탈: <span id="gemsVal">0</span></div>
+  </div>
+
+  <!-- 메인 화면 -->
+  <div id="screenRoot" class="screenRoot"></div>
+
+  <!-- 보상 오버레이 -->
   <div id="rewardOverlay" class="overlay" hidden>
     <div class="overlayCard">
-      <div class="overlayEmoji" id="rewardEmoji">💎</div>
-      <div class="overlayText" id="rewardText"></div>
-      <div class="overlayHint">클릭하면 닫힘</div>
+      <div class="emoji">💎</div>
+      <div id="rewardText" class="overlayText"></div>
+      <div class="overlayHint">클릭해서 닫기</div>
     </div>
   </div>
 
-  <!-- ✅ 확인 오버레이 (ConfirmOverlay) -->
+  <!-- 예 / 아니요 확인창 -->
   <div id="confirmOverlay" class="overlay" hidden>
     <div class="confirmCard">
-      <div class="confirmMsg" id="confirmMsg"></div>
+      <div id="confirmTitle" class="confirmTitle">확인</div>
+      <div id="confirmDesc" class="confirmDesc"></div>
       <div class="confirmBtns">
         <button id="confirmYes" class="btn btn-white">예</button>
         <button id="confirmNo" class="btn btn-white">아니요</button>
@@ -29,6 +44,6 @@
     </div>
   </div>
 
-  <script src="./app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
