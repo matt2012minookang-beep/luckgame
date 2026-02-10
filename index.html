@@ -2,44 +2,57 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>운빨겜</title>
+  <title>운빨겜!</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <!-- 상단 바 -->
+  <!-- 공용 상단바 (파이썬처럼 각 화면에서 유지) -->
   <div class="topBar">
-    <div class="left">
-      <button id="backBtn" class="btn small" hidden>←</button>
-      <div class="titles">
-        <div id="topTitle" class="topTitle">운빨겜!</div>
-        <div id="topSub" class="topSub" hidden></div>
-      </div>
+    <button id="backBtn" class="btn small" hidden>&lt;-</button>
+
+    <div class="topTitles">
+      <div id="topTitle" class="topTitle">운빨겜!</div>
+      <div id="topSub" class="topSub" hidden></div>
     </div>
-    <div class="gems">크리스탈: <span id="gemsVal">0</span></div>
+
+    <div class="topRight">
+      <div class="gems">크리스탈: <span id="gemsVal">0</span></div>
+      <div id="luckLine" class="luckLine" hidden></div>
+    </div>
   </div>
 
-  <!-- 메인 화면 -->
+  <!-- 화면 루트 -->
   <div id="screenRoot" class="screenRoot"></div>
 
-  <!-- 보상 오버레이 -->
+  <!-- ✅ 공용: 보상 팝업 (RewardPopup) -->
   <div id="rewardOverlay" class="overlay" hidden>
     <div class="overlayCard">
-      <div class="emoji">💎</div>
+      <div class="overlayEmoji">💎</div>
       <div id="rewardText" class="overlayText"></div>
-      <div class="overlayHint">클릭해서 닫기</div>
+      <div class="overlayHint">클릭하면 닫힘</div>
     </div>
   </div>
 
-  <!-- 예 / 아니요 확인창 -->
+  <!-- ✅ 공용: 상점 구매 확인 (ConfirmOverlay: 전체 오버레이) -->
   <div id="confirmOverlay" class="overlay" hidden>
     <div class="confirmCard">
-      <div id="confirmTitle" class="confirmTitle">확인</div>
-      <div id="confirmDesc" class="confirmDesc"></div>
+      <div id="confirmMsg" class="confirmMsg">정말로 구매하시겠습니까?</div>
       <div class="confirmBtns">
         <button id="confirmYes" class="btn btn-white">예</button>
         <button id="confirmNo" class="btn btn-white">아니요</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ 공용: 업그레이드 확인 (InlineConfirm: 화면 안 카드) -->
+  <div id="inlineConfirm" class="overlay" hidden>
+    <div class="inlineCard">
+      <div id="inlineTitle" class="inlineTitle"></div>
+      <div id="inlineDesc" class="inlineDesc"></div>
+      <div class="confirmBtns">
+        <button id="inlineYes" class="btn btn-white">예</button>
+        <button id="inlineNo" class="btn btn-white">아니요</button>
       </div>
     </div>
   </div>
