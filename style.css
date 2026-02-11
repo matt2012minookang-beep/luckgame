@@ -1,375 +1,558 @@
-/* ===== 기본 ===== */
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: "Malgun Gothic", system-ui, sans-serif; }
-html, body { width: 100%; height: 100%; background: #06150b; color: #fff; }
-
-/* ===== 상단바 ===== */
-.topBar{
-  height:56px;
-  padding:0 14px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  background:#06150b;
-  border-bottom: 0px solid transparent;
+/* ===== 기본 리셋 ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Malgun Gothic", system-ui, sans-serif;
 }
-.topTitles{ display:flex; flex-direction:column; gap:2px; }
-.topTitle{ font-size:18px; font-weight:800; }
-.topSub{ font-size:12px; opacity:.75; }
-.topRight{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
-.gems{ font-size:14px; opacity:.95; }
-.luckLine{ font-size:12px; opacity:.9; }
 
-/* ===== 버튼 ===== */
-.btn{
-  border:none;
-  cursor:pointer;
-  font-weight:800;
-  border-radius:10px;
-  padding:10px 16px;
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #06150b;
+  color: #ffffff;
 }
-.btn.small{ padding:6px 10px; font-size:12px; }
-.btn-white{ background:#fff; color:#000; }
-.btn-white:hover{ background:#e6e6e6; }
+
+/* ===== 상단 바 ===== */
+.topBar {
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #06150b;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topTitle {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.topSub {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.gems {
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+/* ===== 공용 버튼 ===== */
+.btn {
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border: none;
+  font-weight: bold;
+  user-select: none;
+}
+
+.btn.small {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.btn-white {
+  background: #ffffff;
+  color: #000000;
+}
+
+.btn-white:hover { background: #e6e6e6; }
 
 /* ===== 화면 루트 ===== */
-.screenRoot{
-  width:100%;
-  height:calc(100% - 56px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
+.screenRoot {
+  width: 100%;
+  height: calc(100% - 56px);
+  display: block;
 }
 
-/* ===== 공용: 카드 ===== */
-.panel{
-  width:520px;
-  max-width:90vw;
-  padding:28px;
-  border-radius:18px;
-  border:3px solid rgba(255,255,255,.35);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:16px;
-}
-.bigTitle{ font-size:34px; font-weight:900; opacity:.85; }
+/* ===== 공용: 배경 테마 ===== */
+.theme-green { background: #0b3b1a; }
+.theme-blue  { background: #1f5fbf; }
+.theme-pink  { background: #ff6fb2; }
+.theme-purple{ background: #7a2cff; }
 
-/* ===== 메인 화면 (GameScreen) 박스 ===== */
-.gameBox{
-  width:520px;
-  height:140px;
-  border-radius:18px;
-  border:3px solid rgba(255,255,255,.7);
-  display:flex;
-  align-items:center;
-  justify-content:space-around;
-  padding:12px;
+.screen {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
-/* ===== 상점 카드 ===== */
-.shopRow{
-  display:flex;
-  gap:22px;
-  align-items:center;
-  justify-content:center;
-  flex-wrap:wrap;
+/* ===== 파이썬 느낌: 상단 좌측 버튼 ===== */
+.topLeftBtn {
+  position: absolute;
+  left: 12px;
+  top: 12px;
 }
-.shopCard{
-  width:380px;
-  height:320px;
-  border-radius:18px;
-  border:3px solid rgba(255,255,255,.85);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:flex-start;
-  padding:16px;
-  user-select:none;
-}
-.shopEmoji{ font-size:58px; margin-top:10px; }
-.shopName{ font-size:18px; font-weight:900; margin-top:6px; }
-.shopMid{ font-size:14px; margin-top:10px; opacity:.95; text-align:center; }
-.shopSmall{ font-size:12px; margin-top:6px; opacity:.85; }
 
-/* ===== 상자 선택 화면 ===== */
-.boxRow{
-  display:flex;
-  gap:22px;
-  justify-content:center;
-  flex-wrap:wrap;
+.topLeftBtn + .topLeftBtn {
+  left: 64px;
 }
-.boxCard{
-  width:250px;
-  height:190px;
-  border-radius:18px;
-  border:3px solid rgba(255,255,255,.85);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:16px;
-  user-select:none;
-}
-.boxCardTitle{ font-weight:900; font-size:14px; opacity:.95; }
-.boxCardPrice{ font-weight:900; font-size:16px; margin-top:12px; }
 
-/* ===== 업그레이드(탭) 화면 공용 ===== */
-.tapText{
-  font-size:18px;
-  font-weight:900;
-  margin-top:12px;
+/* ===== 제목 ===== */
+.screenTitle {
+  width: 100%;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  padding-top: 34px;
 }
-.upGradeTitle{
-  font-size:22px;
-  font-weight:900;
-  margin-top:6px;
+
+/* ===== 메인 박스(상자뽑기/전투) ===== */
+.mainBox {
+  position: absolute;
+  left: 50%;
+  top: 78%;
+  transform: translate(-50%, -50%);
+  width: 520px;
+  height: 140px;
+  max-width: 90vw;
+  border-radius: 14px;
+  border: 3px solid rgba(255,255,255,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px;
 }
-.clickArea{
-  width:640px;
-  height:520px;
-  max-width:92vw;
-  border-radius:18px;
-  border:3px solid rgba(255,255,255,.85);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-  user-select:none;
+
+.mainBox .btn {
+  width: 200px;
+  max-width: 40vw;
+  font-size: 18px;
 }
-.boxHolder{
-  display:flex;
-  gap:18px;
-  align-items:center;
-  justify-content:center;
-  transform: translateY(0px);
+
+/* ===== 하단 공지 ===== */
+.notice {
+  position: absolute;
+  left: 50%;
+  top: 92%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  width: 92%;
+  opacity: 0.95;
 }
-.emojiBoxNormal{ font-size:78px; }
-.emojiBoxBig{ font-size:118px; }
-.dotsLine{
-  position:absolute;
-  bottom:26px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:18px;
-  font-weight:900;
-  opacity:.95;
+
+/* ===== 상점/뽑기 카드 ===== */
+.cardsRow {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 380px;
+  height: 320px;
+  border: 3px solid rgba(255,255,255,0.85);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 18px;
+  user-select: none;
+  cursor: pointer;
+}
+
+.card.small {
+  width: 250px;
+  height: 190px;
+  padding-top: 26px;
+}
+
+.cardTitle {
+  margin-top: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  width: 86%;
+  text-align: center;
+}
+
+.cardBigEmoji {
+  font-size: 58px;
+  margin-top: 10px;
+}
+
+.cardPrice {
+  margin-top: 12px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.cardTimer {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* ===== 업그레이드(탭하세요) ===== */
+.tapLabel {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.gradeLabel {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.clickArea {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  transform: translate(-50%, -50%);
+  width: 640px;
+  height: 520px;
+  max-width: 92vw;
+  max-height: 68vh;
+  border: 3px solid rgba(255,255,255,0.85);
+  border-radius: 16px;
+}
+
+.boxHolder {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.boxEmoji {
+  font-size: 78px;
+  line-height: 1;
+}
+
+.boxEmoji.big {
+  font-size: 118px;
+}
+
+.dotsLabel {
+  position: absolute;
+  left: 50%;
+  top: 92%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* ===== 오버레이 (보상) ===== */
+#rewardOverlay { display: none !important; }
+#rewardOverlay.is-open { display: flex !important; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.overlayCard {
+  background: #0a0a0a;
+  border-radius: 18px;
+  border: 2px solid rgba(255,255,255,0.6);
+  padding: 28px 36px;
+  text-align: center;
+}
+
+.overlayCard .emoji {
+  font-size: 64px;
+  margin-bottom: 12px;
+}
+
+.overlayText {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.overlayHint {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* ===== 확인창 오버레이 ===== */
+#confirmOverlay { display: none !important; }
+#confirmOverlay.is-open { display: flex !important; }
+
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.confirmCard {
+  width: 520px;
+  max-width: 92vw;
+  background: #0a0a0a;
+  border-radius: 18px;
+  border: 2px solid rgba(255,255,255,0.7);
+  padding: 24px;
+  text-align: center;
+}
+
+.confirmTitle {
+  font-size: 18px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.confirmDesc {
+  white-space: pre-line;
+  font-size: 14px;
+  opacity: 0.88;
+  margin-bottom: 18px;
+}
+
+.confirmBtns {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
 }
 
 /* ===== 장비 화면 ===== */
-.equipWrap{
-  width:100%;
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:18px;
-  gap:10px;
+.tabsRow {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px; /* 파이썬보다 살짝 위 느낌 */
 }
-.equipTitle{ font-size:22px; font-weight:900; opacity:.95; margin-top:8px; }
-.tabRow{
-  display:flex;
-  gap:14px;
-  margin-top:4px;
+
+.tabBtn {
+  width: 92px;
+  height: 46px;
+  border: 2px solid rgba(255,255,255,0.9);
+  border-radius: 12px;
+  font-weight: 900;
+  background: #ffffff;
+  color: #000000;
+  cursor: pointer;
 }
-.tabBtn{
-  width:110px;
-  height:56px;
-  border-radius:14px;
-  border:2px solid #fff;
-  background:#fff;
-  color:#000;
-  font-weight:900;
-  cursor:pointer;
+
+.tabBtn.active {
+  background: yellow;
 }
-.tabBtn.active{ background:yellow; }
-.equipScroll{
-  width:min(860px, 94vw);
-  height:calc(100% - 190px);
-  overflow:auto;
-  padding:8px;
-  border-radius:18px;
+
+.equipScrollWrap {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 140px;
+  bottom: 18px;
+  overflow: auto;
+  padding: 8px 0 24px;
 }
-.grid5{
-  display:grid;
+
+.equipGrid {
+  width: 100%;
+  display: grid;
   grid-template-columns: repeat(3, 180px);
-  gap:28px;
-  justify-content:flex-start;
-}
-.slot{
-  width:180px; height:180px;
-  border-radius:18px;
-  border:3px solid rgba(255,255,255,.85);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-  user-select:none;
-}
-.slotEmoji{ font-size:46px; margin-top:8px; }
-.slotInnerBlack{
-  width:90px; height:90px;
-  background:#000;
-  border-radius:6px;
-  margin-top:16px;
-}
-.slotName{
-  margin-top:8px;
-  font-weight:900;
-  font-size:12px;
-}
-.slotLevel{
-  position:absolute;
-  right:10px;
-  top:8px;
-  font-weight:900;
-  font-size:12px;
-}
-.slotMax{
-  position:absolute;
-  bottom:6px;
-  font-weight:900;
-  font-size:10px;
-  opacity:.95;
-}
-/* ✅ 맥시멈 때 이름이랑 안 겹치게: "맥시멈" 표시되면 이름 위로 올림 */
-.slot.max-on .slotName{ margin-top:0px; transform: translateY(-10px); }
-
-/* ===== 상세 화면(캐릭터/무기) ===== */
-.detailWrap{
-  width:100%;
-  height:100%;
-  position:relative;
-}
-.detailHeader{
-  position:absolute;
-  left:12px; top:12px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-.detailName{ font-size:16px; font-weight:900; }
-.detailSub{ font-size:12px; opacity:.9; margin-left:4px; }
-.detailCrystal{
-  position:absolute;
-  right:16px; top:16px;
-  font-weight:900;
-}
-.bigBlackBox{
-  position:absolute;
-  left:28%;
-  top:45%;
-  transform:translate(-50%,-50%);
-  width:260px;
-  height:260px;
-  background:#000;
-  border-radius:10px;
-}
-.bigWeapon{
-  position:absolute;
-  left:28%;
-  top:45%;
-  transform:translate(-50%,-50%);
-  font-size:120px;
-}
-.detailDesc{
-  position:absolute;
-  left:28%;
-  top:72%;
-  transform:translate(-50%,-50%);
-  width:420px;
-  text-align:center;
-  font-weight:900;
-  opacity:.95;
-}
-.statCol{
-  position:absolute;
-  right:80px;
-  top:110px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  font-size:16px;
-  font-weight:900;
-}
-.detailNotice{
-  position:absolute;
-  left:50%;
-  bottom:18px;
-  transform:translateX(-50%);
-  font-weight:900;
-}
-.upBtn{
-  position:absolute;
-  right:22px;
-  bottom:22px;
-  padding:12px 16px;
-  border-radius:12px;
-  border:none;
-  font-weight:900;
-  background:#fff;
-  color:#000;
-  cursor:pointer;
-}
-.upBtn:disabled{
-  opacity:.6;
-  cursor:not-allowed;
+  justify-content: center;
+  gap: 28px;
+  padding: 8px 0 24px;
 }
 
-/* ===== 공용: 오버레이 ===== */
-.overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:2000;
+.slot {
+  width: 180px;
+  height: 180px;
+  border: 3px solid rgba(255,255,255,0.9);
+  border-radius: 10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  cursor: pointer;
 }
-/* ✅ 핵심: hidden이면 어떤 CSS도 못 이기게 한다 */
-.overlay[hidden]{ display:none !important; }
 
-.overlayCard{
-  background:#0a0a0a;
-  border-radius:18px;
-  border:3px solid rgba(255,255,255,.8);
-  padding:28px 36px;
-  text-align:center;
+.slotEmoji {
+  font-size: 46px;
+  line-height: 1;
 }
-.overlayEmoji{ font-size:64px; }
-.overlayText{ font-size:16px; margin-top:12px; font-weight:900; }
-.overlayHint{ font-size:12px; opacity:.7; margin-top:10px; }
 
-/* confirm overlay */
-.confirmCard{
-  width:520px;
-  max-width:92vw;
-  padding:24px;
-  border-radius:18px;
-  background:#0a0a0a;
-  border:3px solid rgba(255,255,255,.9);
-  text-align:center;
+.slotInnerBlack {
+  width: 90px;  /* 큰네모의 1/2 */
+  height: 90px;
+  background: #000;
+  border: 1px solid #000;
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  transform: translateX(-50%);
 }
-.confirmMsg{
-  font-size:16px;
-  font-weight:900;
-  margin-bottom:18px;
-  white-space:pre-line;
-}
-.confirmBtns{ display:flex; gap:16px; justify-content:center; }
 
-/* inline confirm card (파이썬 InlineConfirm처럼) */
-.inlineCard{
-  width:560px;
-  max-width:92vw;
-  padding:24px;
-  border-radius:18px;
-  background:#0a0a0a;
-  border:3px solid rgba(255,255,255,.9);
-  text-align:center;
+.slotName {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 900;
+  top: 138px;
+  opacity: 0.95;
 }
-.inlineTitle{ font-size:18px; font-weight:900; margin-bottom:10px; white-space:pre-line; }
-.inlineDesc{ font-size:14px; font-weight:900; opacity:.92; margin-bottom:18px; white-space:pre-line; }
+
+.slotLevel {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.slotBottomTag {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 6px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+/* 겹침 방지용(맥시멈일 때 이름 살짝 올림) */
+.slotName.maxShift {
+  top: 126px;
+}
+
+/* ===== 상세 화면 ===== */
+.detailHeader {
+  position: absolute;
+  left: 78px;
+  top: 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.detailHeader .name {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.detailHeader .sub {
+  font-size: 12px;
+  opacity: 0.9;
+  font-weight: 900;
+}
+
+.bigBlackChar {
+  width: 260px;
+  height: 260px;
+  background: #000;
+  border: 1px solid #000;
+  position: absolute;
+  left: 28%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+}
+
+.bigWeaponEmoji {
+  position: absolute;
+  left: 28%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  font-size: 120px;
+}
+
+.weaponDesc {
+  position: absolute;
+  left: 28%;
+  top: 72%;
+  transform: translate(-50%, -50%);
+  width: 420px;
+  max-width: 80vw;
+  text-align: center;
+  white-space: pre-line;
+  font-weight: 800;
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+.statsRight {
+  position: absolute;
+  right: 260px;
+  top: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-weight: 900;
+}
+
+.upgradeBtn {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+}
+
+/* 화면 안 확인창(InlineConfirm) */
+.inlineConfirmWrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.30);
+  z-index: 900;
+}
+
+.inlineConfirmWrap.is-open {
+  display: flex;
+}
+
+.inlineCard {
+  width: 560px;
+  max-width: 94vw;
+  border: 3px solid rgba(255,255,255,0.9);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+  background: rgba(0,0,0,0.15);
+}
+
+.inlineTitle {
+  font-size: 16px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.inlineDesc {
+  white-space: pre-line;
+  font-size: 14px;
+  font-weight: 900;
+  opacity: 0.95;
+  margin-bottom: 18px;
+}
+
+.inlineBtns {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
