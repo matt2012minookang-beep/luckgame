@@ -212,13 +212,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function pushNav(next) {
     state.prev.push(state.screen);
     state.screen = next;
-    render();
+    render(); // 기본: 오버레이 닫기
   }
 
   function popNav() {
     if (state.prev.length === 0) return;
     state.screen = state.prev.pop();
-    render();
+    render(); // 기본: 오버레이 닫기
   }
 
   // -------------------------
@@ -340,6 +340,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const notice = makeNotice("");
     s.appendChild(notice);
 
+    // ✅ tick에서 game 화면도 갱신되도록 __refresh 추가
+    function refreshGameTexts() {
+      if (serverLuckActive()) {
+        luckLabel.textContent = `서버럭: ${fmtMMSS(state.serverLuckIn)} 남음`;
+      } else {
+        luckLabel.textContent = "";
+      }
+
+      if (state.shopFreeIn <= 0) {
+        shopBtn.style.background = "yellow";
+      } else {
+        shopBtn.style.background = "#ffffff";
+      }
+    }
+    s.__refresh = refreshGameTexts;
+    refreshGameTexts();
+
     // 임시 notice 함수
     function showTempNotice(screen, text) {
       notice.textContent = text;
@@ -442,8 +459,6 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         luckTimer.textContent = "";
       }
-
-      // 서버럭이면 카드 배경색도 보라가 적용되니까 text 대비는 그냥 흰색 유지(이미 white)
     }
 
     // tick에서만 텍스트 업데이트
@@ -1095,7 +1110,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (idx === currentTab) b.classList.add("active");
       b.addEventListener("click", () => {
         state.__equipTab = idx;
-        render(); // 탭 클릭은 렌더해도 됨(오버레이/confirm 닫지 않음)
+        // ✅ 탭 클릭은 confirm/reward 오버레이를 닫지 않는 렌더
+        render({ closeOverlays: false });
       });
       tabs.appendChild(b);
       return b;
@@ -1106,12 +1122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const wrap = el("div", "equipScrollWrap");
     const grid = el("div", "equipGrid");
 
-    // 5칸: 책 읽는 순서 (3개 + 2개)
-    // 캐릭터 탭: 첫칸 네모(검은네모), 나머지🙂
-    // 주무기 탭: 첫칸 나무몽둥이, 둘째칸 목검(구매), 나머지 ⚔️
-    // 보조무기/유물: 기본 아이콘
     const tab = currentTab;
-
     const slots = [];
 
     if (tab === 0) {
@@ -1153,7 +1164,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return slot;
     }
 
-    // 캐릭터 슬롯: 검은 네모 + 이름 + 레벨 + 맥시멈 레벨 겹침 수정
     function makeCharacterSlot() {
       const slot = el("div", "slot");
       const inner = el("div", "slotInnerBlack");
@@ -1177,7 +1187,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return slot;
     }
 
-    // 무기 슬롯(나무몽둥이/목검)
     function makeWeaponSlot(kind) {
       const slot = el("div", "slot");
       const emoji = kind === "wood" ? "🪵" : "🗡️";
@@ -1200,7 +1209,6 @@ document.addEventListener("DOMContentLoaded", () => {
       slot.appendChild(bottom);
 
       if (kind === "sword" && !state.swordOwned) {
-        // 구매 전: 100크리스탈 표시(맥시멈 위치)
         bottom.textContent = "100크리스탈";
         lvl.textContent = "";
       } else {
@@ -1238,7 +1246,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const charBox = el("div", "bigBlackChar");
     s.appendChild(charBox);
 
-    // 스탯 오른쪽
     const stats = el("div", "statsRight");
     const lvl = el("div", "", `레벨: ${state.charLevel}`);
     const hp = el("div", "", `체력: ${fmtFloat(state.charHp)}`);
@@ -1253,12 +1260,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const notice = makeNotice("");
     s.appendChild(notice);
 
-    // 업그레이드 버튼
     const upgradeBtn = makeBtn("", () => openInlineConfirm());
     upgradeBtn.classList.add("upgradeBtn");
     s.appendChild(upgradeBtn);
 
-    // 인라인 확인창
     const inline = makeInlineConfirm();
     s.appendChild(inline.wrap);
 
@@ -1289,7 +1294,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "업그레이드 할까요?",
         `비용: ${cost} 크리스탈\n\n추가되는 능력치\n체력 +0.5\n이동속도 +0.01\n스테미너 +5`,
         () => {
-          // YES
           if (state.charLevel >= state.charLevelMax) return;
           if (!spendGems(cost)) {
             notice.textContent = "크리스탈이 부족합니다!";
@@ -1303,12 +1307,9 @@ document.addEventListener("DOMContentLoaded", () => {
           refreshTexts();
           notice.textContent = "업그레이드 완료!";
           setTimeout(() => (notice.textContent = ""), 1200);
-          // 장비 화면 배지 업데이트를 위해 그냥 refreshScreen
           refreshScreen();
         },
-        () => {
-          // NO
-        }
+        () => {}
       );
     }
 
@@ -1317,7 +1318,6 @@ document.addEventListener("DOMContentLoaded", () => {
     screenRoot.appendChild(s);
 
     function fmtFloat(v) {
-      // 파이썬처럼 trailing 0 제거 느낌
       const s = (Math.round(v * 100) / 100).toString();
       return s;
     }
@@ -1351,7 +1351,6 @@ document.addEventListener("DOMContentLoaded", () => {
     header.appendChild(el("div", "name", name));
     s.appendChild(header);
 
-    // 무기 큰 이모지
     const big = el("div", "bigWeaponEmoji", isWood ? "🪵" : "🗡️");
     s.appendChild(big);
 
@@ -1382,7 +1381,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const notice = makeNotice("");
     s.appendChild(notice);
 
-    // 버튼: 업그레이드 / 구매
     const actionBtn = makeBtn("", () => onAction());
     actionBtn.classList.add("upgradeBtn");
     s.appendChild(actionBtn);
@@ -1535,7 +1533,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function round3(x) { return Math.round(x * 1000) / 1000; }
     function fmt3(x) {
       const v = round3(Number(x));
-      // "2" 같이 깔끔하게 보이게
       if (Number.isInteger(v)) return String(v);
       return String(v);
     }
@@ -1602,11 +1599,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------
   // 렌더 스위치
   // -------------------------
-  function render() {
+  // ✅ opts.closeOverlays === false 일 때는 confirm/reward를 닫지 않음(탭 전환용)
+  function render(opts = {}) {
+    const closeOverlays = opts.closeOverlays !== false;
+
     updateGems();
-    hideReward(); // 화면 바뀌면 보상 오버레이는 닫는 게 자연스러움(파이썬도 다음 화면으로 이동)
-    // confirm은 화면 이동 시만 닫기
-    closeConfirm();
+
+    if (closeOverlays) {
+      hideReward();
+      closeConfirm();
+    }
 
     if (state.screen === "title") return renderTitle();
     if (state.screen === "game") return renderGame();
@@ -1626,13 +1628,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // “짧은 리렌더” 대신: 현재 화면에서 텍스트만 업데이트하는 refresh
   function refreshScreen() {
-    // 현재 DOM 최상단 screen을 찾아 __refresh가 있으면 호출
     const screen = screenRoot.firstElementChild;
     if (screen && typeof screen.__refresh === "function") {
       screen.__refresh();
-    } else {
-      // 일부 화면은 refresh 없으니 필요하면 렌더
-      // (but 타이머 tick에서 호출되지 않게 주의)
     }
   }
 
@@ -1640,21 +1638,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // 타이머 tick (중요: 여기서 render() 절대 안 함)
   // -------------------------
   setInterval(() => {
-    // shop free cooldown
     if (state.shopFreeIn > 0) {
       state.shopFreeIn -= 1;
       if (state.shopFreeIn < 0) state.shopFreeIn = 0;
-      // shop 화면에서만 텍스트 갱신
       if (state.screen === "shop" || state.screen === "game") refreshScreen();
     }
 
-    // server luck
     if (state.serverLuckIn > 0) {
       state.serverLuckIn -= 1;
       if (state.serverLuckIn < 0) state.serverLuckIn = 0;
-
-      // 화면 색/라벨 갱신이 필요하면 “현재 화면에 한해”
-      // (confirmOverlay/inlineConfirm 닫지 않도록 render() 호출 금지)
       refreshScreen();
     }
   }, 1000);
