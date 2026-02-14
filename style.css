@@ -3,7 +3,11 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: "Malgun Gothic", system-ui, sans-serif;
+  /* ✅ 이모지/혼합 글꼴 깨짐 방지용 폰트 스택 강화 */
+  font-family: "Malgun Gothic", system-ui, -apple-system, "Segoe UI",
+               "Apple SD Gothic Neo", "Noto Sans KR",
+               "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji",
+               sans-serif;
 }
 
 html, body {
@@ -11,6 +15,16 @@ html, body {
   height: 100%;
   background: #06150b;
   color: #ffffff;
+}
+
+/* ✅ 이모지 영역 줄간격/렌더링 안정화 */
+.cardBigEmoji,
+.boxEmoji,
+.slotEmoji,
+.bigWeaponEmoji,
+.overlayCard .emoji {
+  line-height: 1.05;
+  text-rendering: geometricPrecision;
 }
 
 /* ===== 상단 바 ===== */
