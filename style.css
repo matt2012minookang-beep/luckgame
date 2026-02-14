@@ -3,7 +3,6 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  /* ✅ 이모지/혼합 글꼴 깨짐 방지용 폰트 스택 강화 */
   font-family: "Malgun Gothic", system-ui, -apple-system, "Segoe UI",
                "Apple SD Gothic Neo", "Noto Sans KR",
                "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji",
@@ -17,7 +16,7 @@ html, body {
   color: #ffffff;
 }
 
-/* ✅ 이모지 영역 줄간격/렌더링 안정화 */
+/* 이모지 영역 안정화 */
 .cardBigEmoji,
 .boxEmoji,
 .slotEmoji,
@@ -120,7 +119,7 @@ html, body {
   padding-top: 34px;
 }
 
-/* ===== 메인 박스(상자뽑기/전투) ===== */
+/* ===== 메인 박스 ===== */
 .mainBox {
   position: absolute;
   left: 50%;
@@ -355,7 +354,7 @@ html, body {
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-top: 8px; /* 파이썬보다 살짝 위 느낌 */
+  margin-top: 8px;
 }
 
 .tabBtn {
@@ -411,7 +410,7 @@ html, body {
 }
 
 .slotInnerBlack {
-  width: 90px;  /* 큰네모의 1/2 */
+  width: 90px;
   height: 90px;
   background: #000;
   border: 1px solid #000;
@@ -448,7 +447,6 @@ html, body {
   font-weight: 900;
 }
 
-/* 겹침 방지용(맥시멈일 때 이름 살짝 올림) */
 .slotName.maxShift {
   top: 126px;
 }
@@ -523,7 +521,7 @@ html, body {
   bottom: 22px;
 }
 
-/* 화면 안 확인창(InlineConfirm) */
+/* InlineConfirm */
 .inlineConfirmWrap {
   position: absolute;
   left: 0;
