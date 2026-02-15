@@ -13,15 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmYes = document.getElementById("confirmYes");
   const confirmNo = document.getElementById("confirmNo");
 
-  // -------------------------
-  // 상태
-  // -------------------------
   const state = {
     screen: "title",
     gems: 0,
 
-    shopFreeIn: 0,     // seconds
-    serverLuckIn: 0,   // seconds
+    shopFreeIn: 0,
+    serverLuckIn: 0,
 
     freeNormalUsed: false,
     freeMidUsed: false,
@@ -65,9 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
     rewardOnDone: null,
   };
 
-  // -------------------------
-  // 유틸
-  // -------------------------
   const COLORS = {
     GREEN_BG: "#0b3b1a",
     BLUE_BG: "#1f5fbf",
@@ -75,11 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
     LUCK_PURPLE: "#7a2cff",
   };
 
-  const PRICE = {
-    NORMAL: 7,
-    MID: 15,
-    HIGH: 30,
-  };
+  const PRICE = { NORMAL: 7, MID: 15, HIGH: 30 };
 
   function fmtMMSS(sec) {
     sec = Math.max(0, Math.floor(sec));
@@ -129,9 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return level * level + 49;
   }
 
-  // -------------------------
-  // 오버레이
-  // -------------------------
+  // ---- overlays
   function showReward(text) {
     rewardText.textContent = text;
     rewardOverlay.hidden = false;
@@ -189,12 +177,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (fn) fn();
   });
 
-  // -------------------------
-  // 네비게이션
-  // -------------------------
-  function clear() {
-    screenRoot.innerHTML = "";
-  }
+  // ---- navigation
+  function clear() { screenRoot.innerHTML = ""; }
 
   function pushNav(next) {
     state.prev.push(state.screen);
@@ -208,9 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   }
 
-  // -------------------------
-  // 공용 UI 생성기
-  // -------------------------
+  // ---- ui helpers
   function el(tag, className, text) {
     const e = document.createElement(tag);
     if (className) e.className = className;
@@ -243,9 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
     screenEl.classList.add(serverLuckActive() ? "theme-purple" : baseTheme);
   }
 
-  // -------------------------
-  // Title
-  // -------------------------
+  // ---- title
   function renderTitle() {
     setHeader("운빨겜!", "");
     clear();
@@ -272,9 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     screenRoot.appendChild(s);
   }
 
-  // -------------------------
-  // Game
-  // -------------------------
+  // ---- game
   function renderGame() {
     setHeader("운빨겜!", "");
     clear();
@@ -284,8 +262,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const shopBtn = makeBtn("상점", () => pushNav("shop"));
     shopBtn.classList.add("topLeftBtn");
-    shopBtn.style.left = "12px";
-    shopBtn.style.top = "12px";
     if (state.shopFreeIn <= 0) shopBtn.style.background = "yellow";
     s.appendChild(shopBtn);
 
@@ -322,17 +298,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function refreshGameTexts() {
-      if (serverLuckActive()) {
-        luckLabel.textContent = `서버럭: ${fmtMMSS(state.serverLuckIn)} 남음`;
-      } else {
-        luckLabel.textContent = "";
-      }
+      if (serverLuckActive()) luckLabel.textContent = `서버럭: ${fmtMMSS(state.serverLuckIn)} 남음`;
+      else luckLabel.textContent = "";
 
-      if (state.shopFreeIn <= 0) {
-        shopBtn.style.background = "yellow";
-      } else {
-        shopBtn.style.background = "#ffffff";
-      }
+      if (state.shopFreeIn <= 0) shopBtn.style.background = "yellow";
+      else shopBtn.style.background = "#ffffff";
     }
     s.__refresh = refreshGameTexts;
     refreshGameTexts();
@@ -340,9 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
     screenRoot.appendChild(s);
   }
 
-  // -------------------------
-  // Shop
-  // -------------------------
+  // ---- shop
   function renderShop() {
     setHeader("상점", "");
     clear();
@@ -418,11 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
         freeTimer.textContent = `${fmtMMSS(state.shopFreeIn)}초 후 무료`;
       }
 
-      if (serverLuckActive()) {
-        luckTimer.textContent = `${fmtMMSS(state.serverLuckIn)} 남음`;
-      } else {
-        luckTimer.textContent = "";
-      }
+      luckTimer.textContent = serverLuckActive() ? `${fmtMMSS(state.serverLuckIn)} 남음` : "";
     }
 
     s.__refresh = refreshShopTexts;
@@ -430,9 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
     screenRoot.appendChild(s);
   }
 
-  // -------------------------
-  // Box Select
-  // -------------------------
+  // ---- box select
   function renderBoxSelect() {
     setHeader("상자 뽑기", "");
     clear();
@@ -451,7 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
     luckLabel.style.top = "46px";
     luckLabel.style.fontSize = "12px";
     luckLabel.style.fontWeight = "900";
-    if (serverLuckActive()) luckLabel.textContent = `서버럭: ${fmtMMSS(state.serverLuckIn)} 남음`;
+    luckLabel.textContent = serverLuckActive() ? `서버럭: ${fmtMMSS(state.serverLuckIn)} 남음` : "";
     s.appendChild(luckLabel);
 
     const notice = makeNotice("");
@@ -526,7 +488,6 @@ document.addEventListener("DOMContentLoaded", () => {
       card.appendChild(price);
 
       card.addEventListener("click", onClick);
-
       return { card, price };
     }
 
@@ -535,22 +496,15 @@ document.addEventListener("DOMContentLoaded", () => {
       c2.price.textContent = !state.freeMidUsed ? "무료 1회 남음" : `${PRICE.MID} 크리스탈`;
       c3.price.textContent = !state.freeHighUsed ? "무료 1회 남음" : `${PRICE.HIGH} 크리스탈`;
 
-      if (serverLuckActive()) {
-        luckLabel.textContent = `서버럭: ${fmtMMSS(state.serverLuckIn)} 남음`;
-      } else {
-        luckLabel.textContent = "";
-      }
+      luckLabel.textContent = serverLuckActive() ? `서버럭: ${fmtMMSS(state.serverLuckIn)} 남음` : "";
     }
 
     s.__refresh = refreshBoxPrices;
     refreshBoxPrices();
-
     screenRoot.appendChild(s);
   }
 
-  // -------------------------
-  // 공용: dots / reward sequence
-  // -------------------------
+  // ---- reward sequence
   function dotsText(filled) {
     return ["●", "●", "●"].map((d, i) => (i < filled ? "●" : "○")).join(" ");
   }
@@ -561,9 +515,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showReward(`크리스탈 ${state.rewardQueue[0]}개를 획득했습니다!`);
   }
 
-  // -------------------------
-  // Normal Upgrade
-  // -------------------------
+  // ---- normal
   function startNormalRun() {
     state.normal = {
       stage: "브론즈",
@@ -591,9 +543,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return [null, 0.0];
   }
 
-  function normalSplitProb() {
-    return serverLuckActive() ? 0.15 : 0.10;
-  }
+  function normalSplitProb() { return serverLuckActive() ? 0.15 : 0.10; }
 
   function renderNormal() {
     setHeader("상자 뽑기", "");
@@ -623,6 +573,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function refreshUI() {
       const st = state.normal;
       grade.textContent = st.stage;
+
       tap.style.display = st.tappedOnce ? "none" : "block";
       tap.style.fontSize = `${st.tapSize}px`;
 
@@ -659,14 +610,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function onTap() {
       const st = state.normal;
       if (!st) return;
-
       if (!st.tappedOnce) st.tappedOnce = true;
 
       if (st.openReady) {
         const times = st.two ? 2 : 1;
         const amt = normalReward(st.stage);
         beginRewardSequence(amt, times, () => {
-          // ✅ 보상 후 box로 복귀 + 뒤로가기 1번이면 메인(game)
           state.screen = "box";
           state.prev = ["game"];
           render();
@@ -705,7 +654,6 @@ document.addEventListener("DOMContentLoaded", () => {
       refreshUI();
     }
 
-    // ✅ (중요) 클릭 리스너는 “clickArea 한 군데만” -> ●● 두 개씩 사라지는 문제 해결
     clickArea.addEventListener("click", (e) => {
       e.preventDefault();
       onTap();
@@ -715,9 +663,7 @@ document.addEventListener("DOMContentLoaded", () => {
     screenRoot.appendChild(s);
   }
 
-  // -------------------------
-  // Mid Upgrade
-  // -------------------------
+  // ---- mid
   function startMidRun() {
     state.mid = {
       star: 1,
@@ -746,9 +692,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return p;
   }
 
-  function midSplitProb() {
-    return serverLuckActive() ? 0.15 : 0.10;
-  }
+  function midSplitProb() { return serverLuckActive() ? 0.15 : 0.10; }
 
   function renderMid() {
     setHeader("상자 뽑기", "");
@@ -856,7 +800,6 @@ document.addEventListener("DOMContentLoaded", () => {
       refreshUI();
     }
 
-    // ✅ 클릭 리스너는 clickArea 한 군데만
     clickArea.addEventListener("click", (e) => {
       e.preventDefault();
       onTap();
@@ -866,9 +809,7 @@ document.addEventListener("DOMContentLoaded", () => {
     screenRoot.appendChild(s);
   }
 
-  // -------------------------
-  // High Upgrade
-  // -------------------------
+  // ---- high
   function startHighRun() {
     state.high = {
       stage: "희귀",
@@ -1037,7 +978,6 @@ document.addEventListener("DOMContentLoaded", () => {
       refreshUI();
     }
 
-    // ✅ 클릭 리스너는 clickArea 한 군데만
     clickArea.addEventListener("click", (e) => {
       e.preventDefault();
       onTap();
@@ -1047,9 +987,7 @@ document.addEventListener("DOMContentLoaded", () => {
     screenRoot.appendChild(s);
   }
 
-  // -------------------------
-  // Equip
-  // -------------------------
+  // ---- equip
   function renderEquip() {
     setHeader("장비 구성", "");
     clear();
@@ -1069,7 +1007,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (idx === currentTab) b.classList.add("active");
       b.addEventListener("click", () => {
         state.__equipTab = idx;
-        render({ closeOverlays: false }); // 탭 전환 시 오버레이 안 닫음
+        render({ closeOverlays: false });
       });
       tabs.appendChild(b);
     });
@@ -1142,7 +1080,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function makeWeaponSlot(kind) {
       const slot = el("div", "slot");
-
       const emoji = kind === "wood" ? "🪵" : "🗡️";
       slot.appendChild(el("div", "slotEmoji", emoji));
 
@@ -1181,9 +1118,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // -------------------------
-  // Char Detail
-  // -------------------------
+  // ---- char detail
   function renderCharDetail() {
     setHeader("장비 구성", "");
     clear();
@@ -1268,14 +1203,10 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshTexts();
     screenRoot.appendChild(s);
 
-    function fmtFloat(v) {
-      return (Math.round(v * 100) / 100).toString();
-    }
+    function fmtFloat(v) { return (Math.round(v * 100) / 100).toString(); }
   }
 
-  // -------------------------
-  // Weapon Detail
-  // -------------------------
+  // ---- weapon detail
   function renderWoodDetail() { renderWeaponDetail("wood"); }
   function renderSwordDetail() { renderWeaponDetail("sword"); }
 
@@ -1298,7 +1229,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const descText = isWood
       ? "나무몽둥이는 초보자를 위한 초급용 아이템입니다.\n대미지와 내구도가 약합니다."
       : "초보자용 무기로 가격이 쌉니다.\n나무몽둥이보단 좋지만 여전히 데미지와 내구도가 낮습니다.";
-
     s.appendChild(el("div", "weaponDesc", descText));
 
     const stats = el("div", "statsRight");
@@ -1373,27 +1303,27 @@ document.addEventListener("DOMContentLoaded", () => {
       refreshScreen();
     }
 
+    // ✅ 변경 포인트: 미구매라도 스텟 표시
     function refreshTexts() {
       const w = readWeapon();
 
-      if (!w.owned && !isWood) {
-        lvl.textContent = "레벨: -";
-        s1.textContent = "";
-        s2.textContent = "";
-        s3.textContent = "";
-        s4.textContent = "";
-        s5.textContent = "";
-        actionBtn.disabled = false;
-        actionBtn.textContent = "100 크리스탈로 구매하기";
-        return;
-      }
+      // 구매 여부와 상관없이 “기본 스텟 표시”
+      // (미구매 상태면 레벨은 1 기준으로 보여주기)
+      const showLevel = (!isWood && !w.owned) ? 1 : w.level;
 
-      lvl.textContent = `레벨: ${w.level}`;
+      lvl.textContent = `레벨: ${showLevel}`;
       s1.textContent = `공격력:${fmt3(w.atk)}`;
       s2.textContent = `소모 스테미너:${fmt3(w.staminaCost)}`;
       s3.textContent = `공격 속도:${fmtSpeed(w.atkSpeed)}초`;
       s4.textContent = `내구도소모:${fmt3(w.duraCost)}/번`;
       s5.textContent = `총 내구도:${fmt3(w.totalDura)}`;
+
+      // 버튼 텍스트/활성
+      if (!isWood && !w.owned) {
+        actionBtn.disabled = false;
+        actionBtn.textContent = "100 크리스탈로 구매하기";
+        return;
+      }
 
       if (w.level < w.levelMax) {
         const cost = weaponUpgradeCost(w.level);
@@ -1408,7 +1338,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function onAction() {
       const w = readWeapon();
 
-      if (!w.owned && !isWood) {
+      // 목검 구매
+      if (!isWood && !w.owned) {
         openConfirm(
           "목검을 구매하시겠습니까?",
           "100 크리스탈",
@@ -1428,6 +1359,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // 업그레이드
       if (w.level >= w.levelMax) {
         notice.textContent = "이미 맥시멈 레벨입니다!";
         setTimeout(() => (notice.textContent = ""), 1200);
@@ -1478,9 +1410,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // -------------------------
-  // InlineConfirm
-  // -------------------------
+  // ---- inline confirm
   function makeInlineConfirm() {
     const wrap = el("div", "inlineConfirmWrap");
     const card = el("div", "inlineCard");
@@ -1489,10 +1419,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const btns = el("div", "inlineBtns");
     const yes = makeBtn("예", () => {});
     const no = makeBtn("아니요", () => {});
-
     btns.appendChild(yes);
     btns.appendChild(no);
-
     card.appendChild(t);
     card.appendChild(d);
     card.appendChild(btns);
@@ -1530,14 +1458,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return { wrap, open, close };
   }
 
-  // -------------------------
-  // Render Switch
-  // -------------------------
+  // ---- render switch
   function render(opts = {}) {
     const closeOverlays = opts.closeOverlays !== false;
 
     updateGems();
-
     if (closeOverlays) {
       hideReward();
       closeConfirm();
@@ -1552,8 +1477,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (state.screen === "high") return renderHigh();
     if (state.screen === "equip") return renderEquip();
     if (state.screen === "charDetail") return renderCharDetail();
-    if (state.screen === "woodDetail") return renderWoodDetail();
-    if (state.screen === "swordDetail") return renderSwordDetail();
+    if (state.screen === "woodDetail") return renderWeaponDetail("wood");
+    if (state.screen === "swordDetail") return renderWeaponDetail("sword");
 
     state.screen = "title";
     return renderTitle();
@@ -1561,14 +1486,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function refreshScreen() {
     const screen = screenRoot.firstElementChild;
-    if (screen && typeof screen.__refresh === "function") {
-      screen.__refresh();
-    }
+    if (screen && typeof screen.__refresh === "function") screen.__refresh();
   }
 
-  // -------------------------
-  // Timer Tick
-  // -------------------------
+  // ---- timers
   setInterval(() => {
     if (state.shopFreeIn > 0) {
       state.shopFreeIn -= 1;
@@ -1583,8 +1504,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, 1000);
 
-  // -------------------------
-  // Start
-  // -------------------------
   render();
 });
