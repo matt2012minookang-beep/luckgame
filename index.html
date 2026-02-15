@@ -4,174 +4,216 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>운빨겜!</title>
-  <link rel="stylesheet" href="style.css" />
+
+  <!-- ✅ 경로 문제로 CSS가 안 읽혀도 화면이 한꺼번에 보이는 걸 막는 응급장치 -->
+  <style>
+    .hidden { display:none !important; }
+  </style>
+
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <div id="app">
-    <!-- HUD (공통 상단) -->
-    <div id="hud" class="hud">
-      <button id="btnHudLeft" class="btn small">←</button>
+    <!-- 공용 HUD -->
+    <header class="hud">
+      <div class="hud-left">
+        <div class="gem-ico">💎</div>
+      </div>
+
       <div class="hud-right">
-        <div class="hud-gems">
-          <span class="label">크리스탈:</span>
-          <span id="hudGems" class="value">0</span>
+        <div class="hud-line">
+          <span class="hud-label">크리스탈:</span>
+          <span id="gemsText" class="hud-value">0</span>
         </div>
-        <div id="hudLuck" class="hud-luck"></div>
-      </div>
-    </div>
-
-    <!-- Title -->
-    <section id="screenTitle" class="screen screen-green">
-      <h1 class="title">운빨겜!</h1>
-      <button id="btnStart" class="btn big">게임 시작!</button>
-    </section>
-
-    <!-- Main -->
-    <section id="screenMain" class="screen screen-green hidden">
-      <button id="btnShop" class="btn small pos-tl">상점</button>
-      <button id="btnEquip" class="btn small pos-ml">장비</button>
-
-      <div class="loadout">
-        <div id="loadoutWeapon" class="loadout-emoji"></div>
-        <div id="loadoutCharBox" class="loadout-char"></div>
-      </div>
-      <div id="loadoutText" class="loadout-text">캐릭터/주무기 선택 필요</div>
-
-      <div class="main-box">
-        <button id="btnBox" class="btn big">상자 뽑기!</button>
-        <button id="btnBattle" class="btn big">전투시작!</button>
-      </div>
-
-      <div id="mainNotice" class="notice"></div>
-    </section>
-
-    <!-- Shop -->
-    <section id="screenShop" class="screen screen-blue hidden">
-      <button id="btnShopBack" class="btn small pos-tl">←</button>
-      <h2 class="h2">상점</h2>
-
-      <div class="shop-row">
-        <div id="shopFree" class="card clickable">
-          <div class="emoji big">💎</div>
-          <div class="card-title">크리스탈</div>
-          <div id="shopFreeStatus" class="card-sub">10개</div>
-          <div id="shopFreeTimer" class="card-timer"></div>
-        </div>
-
-        <div id="shopLuck" class="card clickable">
-          <div class="emoji big">🍀</div>
-          <div class="card-title">서버 운 강화</div>
-          <div class="card-sub">크리스탈 5개 💎</div>
-          <div id="shopLuckTimer" class="card-timer"></div>
+        <div id="serverLuckLine" class="hud-line small hidden">
+          <span class="hud-label">서버럭:</span>
+          <span id="serverLuckText" class="hud-value">00:00</span>
+          <span class="hud-label">남음</span>
         </div>
       </div>
+    </header>
 
-      <div id="shopNotice" class="notice"></div>
-    </section>
+    <!-- =========================
+         MAIN
+    ========================== -->
+    <section id="screen-main" class="screen theme-green">
+      <div class="screen-inner">
+        <h1 class="title">운빨겜!</h1>
 
-    <!-- Box Select -->
-    <section id="screenBox" class="screen screen-pink hidden">
-      <button id="btnBoxBack" class="btn small pos-tl">←</button>
-      <h2 class="h2">상자 뽑기</h2>
+        <button id="btnStart" class="btn btn-primary">게임 시작!</button>
 
-      <div class="box-row">
-        <div id="cardNormal" class="card clickable">
-          <div class="card-title">일반 상자 업그레이드</div>
-          <div id="priceNormal" class="card-sub"></div>
+        <div class="row gap8 mt12">
+          <button id="btnShop" class="btn">상점</button>
+          <button id="btnEquip" class="btn">장비</button>
         </div>
-        <div id="cardMid" class="card clickable">
-          <div class="card-title">중급 상자 업그레이드</div>
-          <div id="priceMid" class="card-sub"></div>
-        </div>
-        <div id="cardHigh" class="card clickable">
-          <div class="card-title">고급 상자 업그레이드</div>
-          <div id="priceHigh" class="card-sub"></div>
-        </div>
-      </div>
 
-      <div id="boxNotice" class="notice"></div>
-    </section>
+        <div class="mt8 subtle" id="needSelectText">캐릭터/주무기 선택 필요</div>
 
-    <!-- Upgrade (shared) -->
-    <section id="screenUpgrade" class="screen screen-pink hidden">
-      <div id="upgradeTap" class="tap">탭하세요!</div>
-      <div id="upgradeGrade" class="upgrade-grade"></div>
-
-      <div id="upgradeArea" class="upgrade-area clickable">
-        <div id="upgradeHolder" class="upgrade-holder">
-          <div id="upgradeBox1" class="upgrade-emoji">📦</div>
-          <div id="upgradeBox2" class="upgrade-emoji hidden">📦</div>
+        <div class="box-actions mt12">
+          <button id="btnBox" class="btn btn-primary">상자 뽑기!</button>
+          <button id="btnBattle" class="btn btn-primary">전투시작!</button>
         </div>
-        <div id="upgradeDots" class="upgrade-dots"></div>
+
+        <div class="mt10 notice" id="mainNotice"></div>
       </div>
     </section>
 
-    <!-- Equip -->
-    <section id="screenEquip" class="screen screen-green hidden">
-      <button id="btnEquipBack" class="btn small pos-tl">←</button>
-      <h2 class="h2">장비 구성</h2>
+    <!-- =========================
+         SHOP
+    ========================== -->
+    <section id="screen-shop" class="screen theme-blue hidden">
+      <button class="btn back" data-back="main">←</button>
+      <div class="screen-inner">
+        <h2 class="h2">상점</h2>
 
-      <div class="tabs">
-        <button class="tab" data-tab="character">캐릭터</button>
-        <button class="tab" data-tab="weapon">주무기</button>
-        <button class="tab" data-tab="sub">보조무기</button>
-        <button class="tab" data-tab="relic">유물</button>
+        <div class="shop-stack">
+          <div id="shopFreeCard" class="card card-xl clickable">
+            <div class="card-emo">💎</div>
+            <div class="card-title">크리스탈</div>
+            <div id="shopFreeStatus" class="card-sub">10개</div>
+            <div id="shopFreeTimer" class="card-sub small"></div>
+          </div>
+
+          <div id="shopLuckCard" class="card card-xl clickable">
+            <div class="card-emo">🍀</div>
+            <div class="card-title">서버 운 강화</div>
+            <div class="card-sub">크리스탈 5개 💎</div>
+            <div id="shopLuckTimer" class="card-sub small"></div>
+          </div>
+        </div>
+
+        <div class="mt12 notice" id="shopNotice"></div>
       </div>
-
-      <div id="equipGrid" class="equip-grid"></div>
-      <div id="equipNotice" class="notice"></div>
     </section>
 
-    <!-- Equip Detail Modal -->
+    <!-- =========================
+         BOX SELECT
+    ========================== -->
+    <section id="screen-box" class="screen theme-pink hidden">
+      <button class="btn back" data-back="main">←</button>
+      <div class="screen-inner">
+        <h2 class="h2">상자 뽑기</h2>
+
+        <div class="cards-row">
+          <div id="cardNormal" class="card clickable">
+            <div class="card-title">일반 상자 업그레이드</div>
+            <div id="priceNormal" class="card-sub big">무료 1회 남음</div>
+          </div>
+
+          <div id="cardMid" class="card clickable">
+            <div class="card-title">중급 상자 업그레이드</div>
+            <div id="priceMid" class="card-sub big">무료 1회 남음</div>
+          </div>
+
+          <div id="cardHigh" class="card clickable">
+            <div class="card-title">고급 상자 업그레이드</div>
+            <div id="priceHigh" class="card-sub big">무료 1회 남음</div>
+          </div>
+        </div>
+
+        <div class="mt12 notice" id="boxNotice"></div>
+      </div>
+    </section>
+
+    <!-- =========================
+         CHEST UPGRADES (Normal / Mid / High)
+    ========================== -->
+    <section id="screen-upgrade" class="screen theme-pink hidden">
+      <div class="screen-inner">
+        <div id="tapHint" class="tap-hint">탭하세요!</div>
+        <div id="upgradeTitle" class="upgrade-title">브론즈</div>
+
+        <div id="tapArea" class="tap-area clickable">
+          <div id="boxHolder" class="box-holder">
+            <div id="boxA" class="box-emo">📦</div>
+            <div id="boxB" class="box-emo hidden">📦</div>
+          </div>
+          <div id="dots" class="dots">● ● ●</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         EQUIP (tabs)
+    ========================== -->
+    <section id="screen-equip" class="screen theme-green hidden">
+      <button class="btn back" data-back="main">←</button>
+      <div class="screen-inner">
+        <h2 class="h2">장비 구성</h2>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="char">캐릭터</button>
+          <button class="tab" data-tab="mainw">주무기</button>
+          <button class="tab" data-tab="subw">보조무기</button>
+          <button class="tab" data-tab="relic">유물</button>
+        </div>
+
+        <div id="equipGrid" class="grid"></div>
+      </div>
+    </section>
+
+    <!-- =========================
+         DETAIL MODAL (Equip detail)
+    ========================== -->
     <div id="modal" class="modal hidden">
       <div class="modal-card">
         <div class="modal-top">
-          <button id="modalBack" class="btn small">←</button>
-          <div id="modalTitle" class="modal-title"></div>
+          <button id="modalClose" class="btn">←</button>
+          <div id="modalTitle" class="modal-title">상세</div>
         </div>
 
         <div class="modal-body">
           <div class="modal-left">
-            <div id="modalBig" class="modal-big"></div>
+            <div id="modalBig" class="modal-big">🪵</div>
             <div id="modalDesc" class="modal-desc"></div>
           </div>
-          <div class="modal-right" id="modalStats"></div>
+
+          <div class="modal-right">
+            <div id="modalStats" class="stats"></div>
+          </div>
         </div>
 
-        <div class="modal-actions">
-          <button id="modalSelect" class="btn">선택</button>
-          <button id="modalMainAction" class="btn">업그레이드</button>
+        <div class="modal-bottom">
+          <button id="btnSelect" class="btn btn-primary">선택</button>
+          <button id="btnMainAction" class="btn btn-primary">업그레이드</button>
         </div>
-        <div id="modalNotice" class="notice"></div>
+
+        <div id="modalNotice" class="mt10 notice"></div>
       </div>
     </div>
 
-    <!-- Battle -->
-    <section id="screenBattle" class="screen hidden">
+    <!-- =========================
+         CONFIRM OVERLAY
+    ========================== -->
+    <div id="confirm" class="confirm hidden">
+      <div class="confirm-card">
+        <div id="confirmMsg" class="confirm-msg">정말로 구매하시겠습니까?</div>
+        <div class="confirm-row">
+          <button id="confirmYes" class="btn btn-primary w120">예</button>
+          <button id="confirmNo" class="btn w120">아니요</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================
+         REWARD POPUP
+    ========================== -->
+    <div id="reward" class="reward hidden">
+      <div class="reward-card clickable">
+        <div class="reward-emo">💎</div>
+        <div id="rewardText" class="reward-text">크리스탈 1개를 획득했습니다!</div>
+      </div>
+    </div>
+
+    <!-- =========================
+         BATTLE
+    ========================== -->
+    <section id="screen-battle" class="screen theme-white hidden">
+      <button id="btnBattleHome" class="btn battle-home">메인 화면</button>
       <canvas id="battleCanvas"></canvas>
-      <button id="btnBattleHome" class="btn small battle-home">메인 화면</button>
     </section>
-
-    <!-- Overlay Confirm -->
-    <div id="confirmOverlay" class="overlay hidden">
-      <div class="overlay-card">
-        <div id="confirmMsg" class="overlay-msg"></div>
-        <div class="overlay-actions">
-          <button id="confirmYes" class="btn">예</button>
-          <button id="confirmNo" class="btn">아니요</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Reward Popup -->
-    <div id="rewardPopup" class="overlay hidden">
-      <div class="overlay-card">
-        <div class="emoji huge">💎</div>
-        <div id="rewardMsg" class="overlay-msg"></div>
-      </div>
-    </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
