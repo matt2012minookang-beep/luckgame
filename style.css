@@ -1,395 +1,220 @@
-:root{
-  --green:#0b3b1a;
-  --blue:#1f5fbf;
-  --pink:#ff6fb2;
-  --purple:#7a2cff;
-  --white:#ffffff;
-  --ink:#0b0b0b;
-  --card-border: rgba(255,255,255,.65);
-  --shadow: 0 10px 30px rgba(0,0,0,.28);
-}
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>운빨겜!</title>
 
-*{ box-sizing:border-box; }
-html,body{ height:100%; margin:0; font-family:"Malgun Gothic",system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
-#app{ height:100%; }
+  <!-- ✅ CSS가 안 읽혀도 화면이 한꺼번에 보이는 걸 막는 응급장치 -->
+  <style>
+    .hidden { display:none !important; }
+  </style>
 
-/* 응급 hidden */
-.hidden{ display:none !important; }
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 공용 HUD -->
+    <header class="hud">
+      <div class="hud-left">
+        <div class="gem-ico">💎</div>
+      </div>
 
-/* HUD */
-.hud{
-  position:fixed;
-  top:10px; left:10px; right:10px;
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  pointer-events:none;
-  z-index:50;
-}
-.hud-left .gem-ico{
-  font-size:28px;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,.25));
-}
-.hud-right{
-  text-align:right;
-  color:#fff;
-  text-shadow: 0 2px 10px rgba(0,0,0,.35);
-}
-.hud-line{ font-weight:900; font-size:22px; line-height:1.1; }
-.hud-line.small{ font-size:16px; opacity:.95; margin-top:6px; }
-.hud-label{ opacity:.95; }
-.hud-value{ margin-left:6px; }
+      <div class="hud-right">
+        <div class="hud-line">
+          <span class="hud-label">크리스탈:</span>
+          <span id="gemsText" class="hud-value">0</span>
+        </div>
+        <div id="serverLuckLine" class="hud-line small hidden">
+          <span class="hud-label">서버럭:</span>
+          <span id="serverLuckText" class="hud-value">00:00</span>
+          <span class="hud-label">남음</span>
+        </div>
+      </div>
+    </header>
 
-/* Screens */
-.screen{
-  position:absolute;
-  inset:0;
-  padding:80px 20px 30px;  /* HUD 아래 공간 */
-  overflow:auto;
-}
-.theme-green{ background:var(--green); color:#fff; }
-.theme-blue{ background:var(--blue); color:#fff; }
-.theme-pink{ background:var(--pink); color:#fff; }
-.theme-white{ background:#fff; color:#000; }
+    <!-- =========================
+         MAIN
+    ========================== -->
+    <section id="screen-main" class="screen theme-green">
+      <div class="screen-inner">
+        <h1 class="title">운빨겜!</h1>
 
-.screen-inner{
-  max-width:980px;
-  margin:0 auto;
-}
+        <button id="btnStart" class="btn btn-primary">게임 시작!</button>
 
-.title{
-  font-size:56px;
-  font-weight:900;
-  margin:10px 0 18px;
-  letter-spacing:-1px;
-}
-.h2{
-  font-size:40px;
-  font-weight:900;
-  margin:6px 0 20px;
-  letter-spacing:-.5px;
-}
+        <div class="row gap8 mt12">
+          <button id="btnShop" class="btn">상점</button>
+          <button id="btnEquip" class="btn">장비</button>
+        </div>
 
-/* Buttons */
-.btn{
-  pointer-events:auto;
-  border:none;
-  border-radius:16px;
-  padding:12px 18px;
-  font-weight:900;
-  cursor:pointer;
-  background:#fff;
-  color:#000;
-  box-shadow: 0 6px 14px rgba(0,0,0,.18);
-}
-.btn:active{ transform: translateY(1px); }
-.btn-primary{
-  background:#fff;
-  color:#000;
-}
-.btn.back{
-  position:fixed;
-  top:70px; left:20px;
-  z-index:40;
-}
-.w120{ width:120px; }
+        <!-- ✅ 나열 문구 제거: 선택 완료되면 JS에서 hidden 처리 -->
+        <div class="mt8 subtle" id="needSelectText">캐릭터/주무기 선택 필요</div>
 
-.row{ display:flex; align-items:center; }
-.gap8{ gap:8px; }
-.mt8{ margin-top:8px; }
-.mt10{ margin-top:10px; }
-.mt12{ margin-top:12px; }
+        <div class="box-actions mt12">
+          <button id="btnBox" class="btn btn-primary">상자 뽑기!</button>
+          <button id="btnBattle" class="btn btn-primary">전투시작!</button>
+        </div>
 
-.subtle{ opacity:.9; font-weight:900; font-size:18px; }
-.notice{ font-weight:900; font-size:18px; min-height:26px; }
+        <div class="mt10 notice" id="mainNotice"></div>
+      </div>
+    </section>
 
-/* main actions row */
-.box-actions{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-}
+    <!-- =========================
+         SHOP
+    ========================== -->
+    <section id="screen-shop" class="screen theme-blue hidden">
+      <button class="btn back" data-back="main">←</button>
+      <div class="screen-inner">
+        <h2 class="h2">상점</h2>
 
-/* Cards */
-.cards-row{
-  display:flex;
-  gap:16px;
-  flex-wrap:wrap;
-}
-.card{
-  pointer-events:auto;
-  width:280px;
-  max-width:100%;
-  min-height:190px;
-  border-radius:22px;
-  border:3px solid var(--card-border);
-  padding:18px;
-  background: rgba(0,0,0,.12);
-  box-shadow: var(--shadow);
-}
-.card-xl{
-  width:420px;
-  min-height:280px;
-}
-.clickable{ cursor:pointer; }
-.card-emo{ font-size:56px; margin-top:4px; }
-.card-title{ font-size:22px; font-weight:900; margin-top:10px; }
-.card-sub{ margin-top:10px; font-size:18px; font-weight:900; opacity:.95; }
-.card-sub.small{ font-size:14px; opacity:.9; }
-.card-sub.big{ font-size:22px; }
+        <div class="shop-stack">
+          <div id="shopFreeCard" class="card card-xl clickable">
+            <div class="card-emo">💎</div>
+            <div class="card-title">크리스탈</div>
+            <div id="shopFreeStatus" class="card-sub">10개</div>
+            <div id="shopFreeTimer" class="card-sub small"></div>
+          </div>
 
-.shop-stack{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-  max-width:460px;
-}
+          <div id="shopLuckCard" class="card card-xl clickable">
+            <div class="card-emo">🍀</div>
+            <div class="card-title">서버 운 강화</div>
+            <div class="card-sub">크리스탈 5개 💎</div>
+            <div id="shopLuckTimer" class="card-sub small"></div>
+          </div>
+        </div>
 
-/* Upgrade tap area */
-.tap-hint{
-  font-size:22px;
-  font-weight:900;
-  text-align:center;
-  opacity:.95;
-  animation: pulse 1s infinite ease-in-out;
-}
-@keyframes pulse{
-  0%,100%{ transform:scale(1); }
-  50%{ transform:scale(1.08); }
-}
-.upgrade-title{
-  text-align:center;
-  font-size:34px;
-  font-weight:900;
-  margin:10px 0 18px;
-}
-.tap-area{
-  margin:0 auto;
-  width:min(760px, 92vw);
-  height: min(560px, 62vh);
-  border-radius:28px;
-  border:3px solid var(--card-border);
-  background: rgba(0,0,0,.12);
-  box-shadow: var(--shadow);
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.box-holder{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:26px;
-  transform: translateY(-16px);
-}
-.box-emo{
-  font-size:92px;
-  user-select:none;
-}
-.box-emo.big{ font-size:128px; }
-.dots{
-  position:absolute;
-  left:50%;
-  bottom:20px;
-  transform:translateX(-50%);
-  font-size:22px;
-  font-weight:900;
-  letter-spacing:6px;
-}
+        <div class="mt12 notice" id="shopNotice"></div>
+      </div>
+    </section>
 
-/* Equip */
-.tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-.tab{
-  pointer-events:auto;
-  border:none;
-  border-radius:14px;
-  padding:10px 14px;
-  font-weight:900;
-  cursor:pointer;
-  background:#fff;
-  color:#000;
-}
-.tab.active{ background: #ffef6e; }
-.grid{
-  display:grid;
-  grid-template-columns: repeat(3, minmax(160px, 1fr));
-  gap:14px;
-}
-@media (max-width:700px){
-  .grid{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-}
-.slot{
-  pointer-events:auto;
-  border-radius:22px;
-  border:3px solid var(--card-border);
-  background: rgba(0,0,0,.12);
-  min-height:180px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  position:relative;
-  cursor:pointer;
-}
-.slot .emo{ font-size:52px; }
-.slot .name{ font-weight:900; }
-.slot .badge{
-  position:absolute;
-  top:10px; right:12px;
-  font-weight:900;
-  opacity:.95;
-}
-.slot .sub{
-  font-size:13px;
-  opacity:.9;
-  font-weight:900;
-}
+    <!-- =========================
+         BOX SELECT
+    ========================== -->
+    <section id="screen-box" class="screen theme-pink hidden">
+      <button class="btn back" data-back="main">←</button>
+      <div class="screen-inner">
+        <h2 class="h2">상자 뽑기</h2>
 
-/* Modal */
-.modal{
-  position:fixed;
-  inset:0;
-  background: rgba(0,0,0,.6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:60;
-}
-.modal-card{
-  width:min(980px, 92vw);
-  background: var(--green);
-  color:#fff;
-  border-radius:26px;
-  border:3px solid rgba(255,255,255,.7);
-  box-shadow: var(--shadow);
-  padding:16px 16px 18px;
-}
-.modal-top{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.modal-title{
-  font-size:22px;
-  font-weight:900;
-}
-.modal-body{
-  margin-top:10px;
-  display:flex;
-  gap:16px;
-  flex-wrap:wrap;
-}
-.modal-left{
-  flex:1 1 320px;
-  min-width:280px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-.modal-big{
-  font-size:96px;
-  margin-top:8px;
-}
-.modal-desc{
-  margin-top:10px;
-  font-weight:900;
-  opacity:.95;
-  text-align:center;
-  white-space:pre-line;
-}
-.modal-right{
-  flex:1 1 320px;
-  min-width:280px;
-}
-.stats{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  font-weight:900;
-  font-size:18px;
-}
-.modal-bottom{
-  margin-top:14px;
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap;
-}
+        <div class="cards-row">
+          <div id="cardNormal" class="card clickable">
+            <div class="card-title">일반 상자 업그레이드</div>
+            <div id="priceNormal" class="card-sub big">무료 1회 남음</div>
+          </div>
 
-/* Confirm */
-.confirm{
-  position:fixed;
-  inset:0;
-  background: rgba(0,0,0,.65);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:70;
-}
-.confirm-card{
-  width:min(520px, 92vw);
-  background: var(--blue);
-  color:#fff;
-  border-radius:22px;
-  border:3px solid rgba(255,255,255,.7);
-  box-shadow: var(--shadow);
-  padding:18px;
-  text-align:center;
-}
-.confirm-msg{
-  font-size:18px;
-  font-weight:900;
-  margin:6px 0 16px;
-  white-space:pre-line;
-}
-.confirm-row{
-  display:flex;
-  justify-content:center;
-  gap:14px;
-}
+          <div id="cardMid" class="card clickable">
+            <div class="card-title">중급 상자 업그레이드</div>
+            <div id="priceMid" class="card-sub big">무료 1회 남음</div>
+          </div>
 
-/* Reward */
-.reward{
-  position:fixed;
-  inset:0;
-  background: rgba(0,0,0,.55);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:80;
-}
-.reward-card{
-  width:min(520px, 92vw);
-  background: var(--pink);
-  color:#fff;
-  border-radius:24px;
-  border:3px solid rgba(255,255,255,.75);
-  box-shadow: var(--shadow);
-  padding:18px 18px 22px;
-  text-align:center;
-}
-.reward-emo{
-  font-size:72px;
-}
-.reward-text{
-  margin-top:10px;
-  font-size:18px;
-  font-weight:900;
-}
+          <div id="cardHigh" class="card clickable">
+            <div class="card-title">고급 상자 업그레이드</div>
+            <div id="priceHigh" class="card-sub big">무료 1회 남음</div>
+          </div>
+        </div>
 
-/* Battle */
-#screen-battle{ padding:0; overflow:hidden; }
-#battleCanvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-}
-.battle-home{
-  position:fixed;
-  right:18px;
-  bottom:18px;
-  z-index:90;
-}
+        <div class="mt12 notice" id="boxNotice"></div>
+      </div>
+    </section>
+
+    <!-- =========================
+         CHEST UPGRADES (Normal / Mid / High)
+    ========================== -->
+    <section id="screen-upgrade" class="screen theme-pink hidden">
+      <div class="screen-inner">
+        <div id="tapHint" class="tap-hint">탭하세요!</div>
+        <div id="upgradeTitle" class="upgrade-title">브론즈</div>
+
+        <div id="tapArea" class="tap-area clickable">
+          <div id="boxHolder" class="box-holder">
+            <div id="boxA" class="box-emo">📦</div>
+            <div id="boxB" class="box-emo hidden">📦</div>
+          </div>
+          <div id="dots" class="dots">● ● ●</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         EQUIP (tabs)
+    ========================== -->
+    <section id="screen-equip" class="screen theme-green hidden">
+      <button class="btn back" data-back="main">←</button>
+      <div class="screen-inner">
+        <h2 class="h2">장비 구성</h2>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="char">캐릭터</button>
+          <button class="tab" data-tab="mainw">주무기</button>
+          <button class="tab" data-tab="subw">보조무기</button>
+          <button class="tab" data-tab="relic">유물</button>
+        </div>
+
+        <div id="equipGrid" class="grid"></div>
+      </div>
+    </section>
+
+    <!-- =========================
+         DETAIL MODAL (Equip detail)
+    ========================== -->
+    <div id="modal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-top">
+          <button id="modalClose" class="btn">←</button>
+          <div id="modalTitle" class="modal-title">상세</div>
+        </div>
+
+        <div class="modal-body">
+          <div class="modal-left">
+            <div id="modalBig" class="modal-big">🪵</div>
+            <div id="modalDesc" class="modal-desc"></div>
+          </div>
+
+          <div class="modal-right">
+            <div id="modalStats" class="stats"></div>
+          </div>
+        </div>
+
+        <div class="modal-bottom">
+          <button id="btnSelect" class="btn btn-primary">선택</button>
+          <button id="btnMainAction" class="btn btn-primary">업그레이드</button>
+        </div>
+
+        <div id="modalNotice" class="mt10 notice"></div>
+      </div>
+    </div>
+
+    <!-- =========================
+         CONFIRM OVERLAY
+    ========================== -->
+    <div id="confirm" class="confirm hidden">
+      <div class="confirm-card">
+        <div id="confirmMsg" class="confirm-msg">정말로 구매하시겠습니까?</div>
+        <div class="confirm-row">
+          <button id="confirmYes" class="btn btn-primary w120">예</button>
+          <button id="confirmNo" class="btn w120">아니요</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================
+         REWARD POPUP
+    ========================== -->
+    <div id="reward" class="reward hidden">
+      <div class="reward-card clickable">
+        <div class="reward-emo">💎</div>
+        <div id="rewardText" class="reward-text">크리스탈 1개를 획득했습니다!</div>
+      </div>
+    </div>
+
+    <!-- =========================
+         BATTLE
+    ========================== -->
+    <section id="screen-battle" class="screen theme-white hidden">
+      <button id="btnBattleHome" class="btn battle-home">메인 화면</button>
+      <canvas id="battleCanvas"></canvas>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
