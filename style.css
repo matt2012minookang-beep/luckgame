@@ -1,220 +1,482 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>운빨겜!</title>
+:root{
+  --green:#0b3b1a;
+  --blue:#1f5fbf;
+  --pink:#ff6fb2;
+  --luck:#7a2cff;
+  --white:#ffffff;
 
-  <!-- ✅ CSS가 안 읽혀도 화면이 한꺼번에 보이는 걸 막는 응급장치 -->
-  <style>
-    .hidden { display:none !important; }
-  </style>
+  --text:#ffffff;
+  --cardBorder: rgba(255,255,255,0.9);
+  --btnText:#111;
+}
 
-  <link rel="stylesheet" href="./style.css" />
-</head>
-<body>
-  <div id="app">
-    <!-- 공용 HUD -->
-    <header class="hud">
-      <div class="hud-left">
-        <div class="gem-ico">💎</div>
-      </div>
+*{ box-sizing:border-box; }
+html,body{ height:100%; margin:0; }
+body{
+  font-family: "Malgun Gothic", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background:#000;
+}
 
-      <div class="hud-right">
-        <div class="hud-line">
-          <span class="hud-label">크리스탈:</span>
-          <span id="gemsText" class="hud-value">0</span>
-        </div>
-        <div id="serverLuckLine" class="hud-line small hidden">
-          <span class="hud-label">서버럭:</span>
-          <span id="serverLuckText" class="hud-value">00:00</span>
-          <span class="hud-label">남음</span>
-        </div>
-      </div>
-    </header>
+#app{
+  position:relative;
+  width:100%;
+  height:100vh;
+  overflow:hidden; /* ✅ 스크롤/나열 방지 */
+}
 
-    <!-- =========================
-         MAIN
-    ========================== -->
-    <section id="screen-main" class="screen theme-green">
-      <div class="screen-inner">
-        <h1 class="title">운빨겜!</h1>
+/* ===== HUD ===== */
+.hud{
+  position:absolute;
+  z-index:50;
+  top:0;
+  left:0;
+  right:0;
+  padding:10px 14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  pointer-events:none;
+}
+.hud-left{ display:flex; gap:10px; align-items:center; }
+.gem-ico{
+  width:28px;height:28px;
+  display:grid;place-items:center;
+  font-size:22px;
+  filter: drop-shadow(0 2px 1px rgba(0,0,0,0.25));
+}
+.hud-right{
+  text-align:right;
+  color:#fff;
+  font-weight:800;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.20);
+}
+.hud-line{ line-height:1.2; }
+.hud-line.small{ font-size:12px; opacity:0.95; }
+.hud-label{ opacity:0.95; margin-right:6px; }
+.hud-value{ letter-spacing:0.5px; }
 
-        <button id="btnStart" class="btn btn-primary">게임 시작!</button>
+/* ===== Screen basics ===== */
+.screen{
+  position:absolute;
+  inset:0;
+  padding-top:54px; /* HUD 아래 */
+  display:block;
+}
+.screen-inner{
+  width:100%;
+  max-width:980px;
+  margin:0 auto;
+  padding:26px 18px 34px;
+}
 
-        <div class="row gap8 mt12">
-          <button id="btnShop" class="btn">상점</button>
-          <button id="btnEquip" class="btn">장비</button>
-        </div>
+/* 테마 */
+.theme-green{ background:var(--green); color:var(--text); }
+.theme-blue{ background:var(--blue); color:var(--text); }
+.theme-pink{ background:var(--pink); color:var(--text); }
+.theme-white{ background:#fff; color:#111; }
 
-        <!-- ✅ 나열 문구 제거: 선택 완료되면 JS에서 hidden 처리 -->
-        <div class="mt8 subtle" id="needSelectText">캐릭터/주무기 선택 필요</div>
+#app.luck .theme-green,
+#app.luck .theme-blue,
+#app.luck .theme-pink{
+  background:var(--luck);
+}
 
-        <div class="box-actions mt12">
-          <button id="btnBox" class="btn btn-primary">상자 뽑기!</button>
-          <button id="btnBattle" class="btn btn-primary">전투시작!</button>
-        </div>
+/* ===== Titles ===== */
+.title{
+  font-size:56px;
+  font-weight:900;
+  margin:6px 0 18px;
+  letter-spacing:-1px;
+  text-align:center;
+}
+.h2{
+  font-size:44px;
+  margin:6px 0 18px;
+  font-weight:900;
+  text-align:left;
+}
 
-        <div class="mt10 notice" id="mainNotice"></div>
-      </div>
-    </section>
+/* ===== Buttons ===== */
+.btn{
+  appearance:none;
+  border:0;
+  background:#fff;
+  color:#111;
+  font-weight:900;
+  border-radius:999px;
+  padding:12px 18px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.18);
+  cursor:pointer;
+  user-select:none;
+}
+.btn:active{ transform:translateY(1px); box-shadow: 0 5px 0 rgba(0,0,0,0.16); }
+.btn-primary{
+  padding:14px 22px;
+  font-size:20px;
+}
+.btn.back{
+  position:absolute;
+  left:12px;
+  top:60px;
+  z-index:5;
+  width:54px;
+  height:44px;
+  border-radius:16px;
+  display:grid;
+  place-items:center;
+  padding:0;
+}
 
-    <!-- =========================
-         SHOP
-    ========================== -->
-    <section id="screen-shop" class="screen theme-blue hidden">
-      <button class="btn back" data-back="main">←</button>
-      <div class="screen-inner">
-        <h2 class="h2">상점</h2>
+/* 메인 버튼 배치 */
+.row{ display:flex; align-items:center; justify-content:center; }
+.gap8{ gap:10px; }
+.mt12{ margin-top:12px; }
+.mt10{ margin-top:10px; }
+.mt8{ margin-top:8px; }
+.subtle{ opacity:0.95; font-weight:900; font-size:20px; text-align:center; }
+.notice{ min-height:22px; font-weight:900; text-align:center; }
 
-        <div class="shop-stack">
-          <div id="shopFreeCard" class="card card-xl clickable">
-            <div class="card-emo">💎</div>
-            <div class="card-title">크리스탈</div>
-            <div id="shopFreeStatus" class="card-sub">10개</div>
-            <div id="shopFreeTimer" class="card-sub small"></div>
-          </div>
+.box-actions{
+  display:flex;
+  gap:14px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
 
-          <div id="shopLuckCard" class="card card-xl clickable">
-            <div class="card-emo">🍀</div>
-            <div class="card-title">서버 운 강화</div>
-            <div class="card-sub">크리스탈 5개 💎</div>
-            <div id="shopLuckTimer" class="card-sub small"></div>
-          </div>
-        </div>
+/* ✅ 메인 화면을 보기 좋게 중앙 배치 */
+#screen-main .screen-inner{
+  min-height: calc(100vh - 120px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
 
-        <div class="mt12 notice" id="shopNotice"></div>
-      </div>
-    </section>
+/* ===== Cards ===== */
+.card{
+  width:280px;
+  height:190px;
+  border:3px solid var(--cardBorder);
+  border-radius:18px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  text-align:center;
+  background: rgba(0,0,0,0.05);
+}
+.card-xl{
+  width:420px;
+  height:320px;
+}
+.clickable{ cursor:pointer; user-select:none; }
+.card-emo{ font-size:54px; margin-bottom:2px; }
+.card-title{ font-size:20px; font-weight:900; }
+.card-sub{ font-size:18px; font-weight:900; opacity:0.95; }
+.card-sub.small{ font-size:14px; opacity:0.92; }
+.card-sub.big{ font-size:22px; }
 
-    <!-- =========================
-         BOX SELECT
-    ========================== -->
-    <section id="screen-box" class="screen theme-pink hidden">
-      <button class="btn back" data-back="main">←</button>
-      <div class="screen-inner">
-        <h2 class="h2">상자 뽑기</h2>
+/* ✅ 상점 나열 제거: 가로 배치 */
+.shop-stack{
+  display:flex;
+  flex-direction:row;
+  gap:16px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  justify-content:flex-start;
+}
 
-        <div class="cards-row">
-          <div id="cardNormal" class="card clickable">
-            <div class="card-title">일반 상자 업그레이드</div>
-            <div id="priceNormal" class="card-sub big">무료 1회 남음</div>
-          </div>
+/* Box cards row */
+.cards-row{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  justify-content:flex-start;
+}
 
-          <div id="cardMid" class="card clickable">
-            <div class="card-title">중급 상자 업그레이드</div>
-            <div id="priceMid" class="card-sub big">무료 1회 남음</div>
-          </div>
+/* ===== Upgrade tap screen ===== */
+.tap-hint{
+  font-size:22px;
+  font-weight:900;
+  text-align:center;
+  margin-top:8px;
+  animation: pulse 1s infinite ease-in-out;
+}
+@keyframes pulse{
+  0%{ transform:scale(1); opacity:1; }
+  50%{ transform:scale(1.08); opacity:0.92; }
+  100%{ transform:scale(1); opacity:1; }
+}
 
-          <div id="cardHigh" class="card clickable">
-            <div class="card-title">고급 상자 업그레이드</div>
-            <div id="priceHigh" class="card-sub big">무료 1회 남음</div>
-          </div>
-        </div>
+.upgrade-title{
+  font-size:32px;
+  font-weight:900;
+  text-align:center;
+  margin:10px 0 14px;
+}
 
-        <div class="mt12 notice" id="boxNotice"></div>
-      </div>
-    </section>
+.tap-area{
+  width:min(760px, 92vw);
+  height:min(540px, 68vh);
+  margin:0 auto;
+  border:3px solid var(--cardBorder);
+  border-radius:20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+}
+.box-holder{
+  display:flex;
+  gap:22px;
+  align-items:center;
+  justify-content:center;
+}
+.box-emo{
+  font-size:88px;
+  line-height:1;
+  filter: drop-shadow(0 4px 1px rgba(0,0,0,0.18));
+}
+.box-emo.big{ font-size:128px; }
+.dots{
+  font-size:20px;
+  font-weight:900;
+  opacity:0.95;
+}
 
-    <!-- =========================
-         CHEST UPGRADES (Normal / Mid / High)
-    ========================== -->
-    <section id="screen-upgrade" class="screen theme-pink hidden">
-      <div class="screen-inner">
-        <div id="tapHint" class="tap-hint">탭하세요!</div>
-        <div id="upgradeTitle" class="upgrade-title">브론즈</div>
+/* ===== Equip ===== */
+.tabs{
+  display:flex;
+  gap:10px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.tab{
+  border:2px solid rgba(255,255,255,0.9);
+  background:#fff;
+  color:#111;
+  font-weight:900;
+  border-radius:14px;
+  padding:10px 14px;
+  cursor:pointer;
+}
+.tab.active{ background:yellow; }
 
-        <div id="tapArea" class="tap-area clickable">
-          <div id="boxHolder" class="box-holder">
-            <div id="boxA" class="box-emo">📦</div>
-            <div id="boxB" class="box-emo hidden">📦</div>
-          </div>
-          <div id="dots" class="dots">● ● ●</div>
-        </div>
-      </div>
-    </section>
+.grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:14px;
+  align-items:stretch;
+}
+@media (max-width: 880px){
+  .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
-    <!-- =========================
-         EQUIP (tabs)
-    ========================== -->
-    <section id="screen-equip" class="screen theme-green hidden">
-      <button class="btn back" data-back="main">←</button>
-      <div class="screen-inner">
-        <h2 class="h2">장비 구성</h2>
+.slot{
+  border:3px solid rgba(255,255,255,0.9);
+  border-radius:18px;
+  height:180px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  position:relative;
+  background: rgba(0,0,0,0.06);
+  cursor:pointer;
+  user-select:none;
+}
+.slot-emo{ font-size:52px; }
+.slot-name{ font-size:14px; font-weight:900; margin-top:8px; text-align:center; opacity:0.95; }
+.badge{
+  position:absolute;
+  right:10px;
+  top:10px;
+  font-weight:900;
+  font-size:14px;
+}
+.slot-foot{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:10px;
+  text-align:center;
+  font-weight:900;
+  font-size:12px;
+  opacity:0.95;
+}
+.char-mini{
+  width:90px;
+  height:90px;
+  background:#000;
+  border-radius:10px;
+  margin-bottom:6px;
+}
 
-        <div class="tabs">
-          <button class="tab active" data-tab="char">캐릭터</button>
-          <button class="tab" data-tab="mainw">주무기</button>
-          <button class="tab" data-tab="subw">보조무기</button>
-          <button class="tab" data-tab="relic">유물</button>
-        </div>
+/* ===== Modal ===== */
+.modal{
+  position:absolute;
+  inset:0;
+  z-index:60;
+  background: rgba(0,0,0,0.65);
+  display:grid;
+  place-items:center;
+  padding:16px;
+}
+.modal-card{
+  width:min(980px, 96vw);
+  background: var(--green);
+  color:#fff;
+  border-radius:18px;
+  border:3px solid rgba(255,255,255,0.9);
+  padding:14px;
+}
+#app.luck .modal-card{ background:var(--luck); }
 
-        <div id="equipGrid" class="grid"></div>
-      </div>
-    </section>
+.modal-top{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.modal-title{
+  flex:1;
+  text-align:center;
+  font-size:20px;
+  font-weight:900;
+}
 
-    <!-- =========================
-         DETAIL MODAL (Equip detail)
-    ========================== -->
-    <div id="modal" class="modal hidden">
-      <div class="modal-card">
-        <div class="modal-top">
-          <button id="modalClose" class="btn">←</button>
-          <div id="modalTitle" class="modal-title">상세</div>
-        </div>
+.modal-body{
+  display:flex;
+  gap:18px;
+  padding:14px 6px;
+  flex-wrap:wrap;
+}
+.modal-left{
+  flex:1;
+  min-width:260px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.modal-big{
+  font-size:98px;
+  line-height:1;
+}
+.modal-desc{
+  text-align:center;
+  font-weight:900;
+  opacity:0.95;
+  white-space:pre-line;
+}
 
-        <div class="modal-body">
-          <div class="modal-left">
-            <div id="modalBig" class="modal-big">🪵</div>
-            <div id="modalDesc" class="modal-desc"></div>
-          </div>
+.modal-right{
+  flex:1;
+  min-width:280px;
+}
+.stats{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  font-weight:900;
+}
+.stat-line{
+  font-size:18px;
+}
+.modal-bottom{
+  display:flex;
+  gap:10px;
+  justify-content:space-between;
+  padding-top:6px;
+  flex-wrap:wrap;
+}
 
-          <div class="modal-right">
-            <div id="modalStats" class="stats"></div>
-          </div>
-        </div>
+.w120{ width:120px; }
 
-        <div class="modal-bottom">
-          <button id="btnSelect" class="btn btn-primary">선택</button>
-          <button id="btnMainAction" class="btn btn-primary">업그레이드</button>
-        </div>
+/* ===== Confirm ===== */
+.confirm{
+  position:absolute;
+  inset:0;
+  z-index:70;
+  background: rgba(0,0,0,0.65);
+  display:grid;
+  place-items:center;
+  padding:16px;
+}
+.confirm-card{
+  width:min(560px, 96vw);
+  background: var(--blue);
+  border:3px solid rgba(255,255,255,0.9);
+  border-radius:18px;
+  padding:18px;
+  color:#fff;
+}
+#app.luck .confirm-card{ background:var(--luck); }
+.confirm-msg{
+  font-weight:900;
+  font-size:18px;
+  text-align:center;
+  margin-bottom:14px;
+}
+.confirm-row{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
 
-        <div id="modalNotice" class="mt10 notice"></div>
-      </div>
-    </div>
+/* ===== Reward ===== */
+.reward{
+  position:absolute;
+  inset:0;
+  z-index:80;
+  background: rgba(0,0,0,0.55);
+  display:grid;
+  place-items:center;
+  padding:16px;
+}
+.reward-card{
+  width:min(560px, 96vw);
+  background: var(--pink);
+  border:3px solid rgba(255,255,255,0.95);
+  border-radius:18px;
+  padding:20px;
+  color:#fff;
+  text-align:center;
+}
+#app.luck .reward-card{ background:var(--luck); }
+.reward-emo{
+  font-size:86px;
+  margin-bottom:10px;
+  animation: pop 0.18s ease-out;
+}
+@keyframes pop{
+  0%{ transform:scale(0.9); }
+  100%{ transform:scale(1); }
+}
+.reward-text{
+  font-weight:900;
+  font-size:18px;
+}
 
-    <!-- =========================
-         CONFIRM OVERLAY
-    ========================== -->
-    <div id="confirm" class="confirm hidden">
-      <div class="confirm-card">
-        <div id="confirmMsg" class="confirm-msg">정말로 구매하시겠습니까?</div>
-        <div class="confirm-row">
-          <button id="confirmYes" class="btn btn-primary w120">예</button>
-          <button id="confirmNo" class="btn w120">아니요</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- =========================
-         REWARD POPUP
-    ========================== -->
-    <div id="reward" class="reward hidden">
-      <div class="reward-card clickable">
-        <div class="reward-emo">💎</div>
-        <div id="rewardText" class="reward-text">크리스탈 1개를 획득했습니다!</div>
-      </div>
-    </div>
-
-    <!-- =========================
-         BATTLE
-    ========================== -->
-    <section id="screen-battle" class="screen theme-white hidden">
-      <button id="btnBattleHome" class="btn battle-home">메인 화면</button>
-      <canvas id="battleCanvas"></canvas>
-    </section>
-  </div>
-
-  <script src="./app.js"></script>
-</body>
-</html>
+/* ===== Battle ===== */
+#screen-battle{
+  padding-top:54px;
+}
+.battle-home{
+  position:absolute;
+  right:16px;
+  bottom:16px;
+  z-index:5;
+}
+#battleCanvas{
+  position:absolute;
+  inset:54px 0 0 0;
+  width:100%;
+  height:calc(100% - 54px);
+  display:block;
+  background:#fff;
+}
