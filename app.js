@@ -1,44 +1,104 @@
 /* =========================
-   상태/유틸
+   운빨겜 - HTML(너가 준 구조) 전용
+   - 화면 전환: main/shop/box/upgrade/equip/battle
+   - 상점 무료쿨 90초, 서버럭 60초(5% 확률 보정)
+   - 상자 업그레이드: 점 1개씩만 감소(버그 방지), 보상 후 자동으로 box로 복귀
+   - 장비: 캐릭터/주무기(나무몽둥이/목검) 스탯 표시, 목검 미구매여도 스탯은 보임
+   - 전투: 캔버스, 그리드, WASD 이동, 클릭 공격(0.2초 잔상), 무기별 쿨다운
 ========================= */
+
+/* ---------- DOM helpers ---------- */
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-function mmss(sec){
-  sec = Math.max(0, Math.floor(sec));
-  const m = String(Math.floor(sec/60)).padStart(2,'0');
-  const s = String(sec%60).padStart(2,'0');
-  return `${m}:${s}`;
-}
+/* ---------- Elements ---------- */
+const screens = {
+  main: $("#screen-main"),
+  shop: $("#screen-shop"),
+  box: $("#screen-box"),
+  upgrade: $("#screen-upgrade"),
+  equip: $("#screen-equip"),
+  battle: $("#screen-battle"),
+};
 
-/* =========================
-   게임 데이터(원본 Tk 버전 느낌 유지)
-========================= */
+const gemsText = $("#gemsText");
+const serverLuckLine = $("#serverLuckLine");
+const serverLuckText = $("#serverLuckText");
+
+const needSelectText = $("#needSelectText");
+const mainNotice = $("#mainNotice");
+
+const shopNotice = $("#shopNotice");
+const shopFreeCard = $("#shopFreeCard");
+const shopFreeStatus = $("#shopFreeStatus");
+const shopFreeTimer = $("#shopFreeTimer");
+const shopLuckCard = $("#shopLuckCard");
+const shopLuckTimer = $("#shopLuckTimer");
+
+const boxNotice = $("#boxNotice");
+const priceNormal = $("#priceNormal");
+const priceMid = $("#priceMid");
+const priceHigh = $("#priceHigh");
+const cardNormal = $("#cardNormal");
+const cardMid = $("#cardMid");
+const cardHigh = $("#cardHigh");
+
+const tapHint = $("#tapHint");
+const upgradeTitle = $("#upgradeTitle");
+const tapArea = $("#tapArea");
+const boxA = $("#boxA");
+const boxB = $("#boxB");
+const dots = $("#dots");
+
+const equipGrid = $("#equipGrid");
+const modal = $("#modal");
+const modalClose = $("#modalClose");
+const modalTitle = $("#modalTitle");
+const modalBig = $("#modalBig");
+const modalDesc = $("#modalDesc");
+const modalStats = $("#modalStats");
+const btnSelect = $("#btnSelect");
+const btnMainAction = $("#btnMainAction");
+const modalNotice = $("#modalNotice");
+
+const confirm = $("#confirm");
+const confirmMsg = $("#confirmMsg");
+const confirmYes = $("#confirmYes");
+const confirmNo = $("#confirmNo");
+
+const reward = $("#reward");
+const rewardText = $("#rewardText");
+
+const battleCanvas = $("#battleCanvas");
+const btnBattleHome = $("#btnBattleHome");
+
+/* ---------- State ---------- */
 const state = {
+  screen: "main",
+
   gems: 0,
 
-  // 상자 가격
-  PRICE_NORMAL: 7,
-  PRICE_MID: 15,
-  PRICE_HIGH: 30,
+  // 선택 상태
+  selectedCharacter: false,
+  selectedWeapon: null, // "club" | "wood_sword"
 
   // 무료 1회
   free_normal_used: false,
   free_mid_used: false,
   free_high_used: false,
 
+  // 상자 가격
+  PRICE_NORMAL: 7,
+  PRICE_MID: 15,
+  PRICE_HIGH: 30,
+
+  // 상점 무료 쿨
+  shopFreeIn: 0,
+  shopCooldownTimer: null,
+
   // 서버럭
   serverLuckIn: 0,
   serverLuckTimer: null,
-
-  // 상점 무료쿨
-  shopFreeIn: 0,
-  shopFreeTimer: null,
-
-  // 선택 상태
-  selected_character: false,
-  selected_weapon: null, // "club" | "wood_sword"
 
   // 캐릭터
   char_level: 1,
@@ -52,143 +112,149 @@ const state = {
   club_level: 1,
   club_level_max: 10,
   club_atk: 2.0,
-  club_stamina_cost: 0.10,  // 표시: /번
-  club_attack_speed: 1.0,   // 초(쿨다운)
+  club_stamina_cost: 0.10, // /번
+  club_attack_speed: 1.0,  // 초(쿨다운)
   club_dura_cost: 0.10,
   club_total_dura: 7.0,
 
   // 목검
-  wood_owned: false,
-  wood_price: 100,
-  wood_level: 1,
-  wood_level_max: 10,
-  wood_atk: 5.0,
-  wood_stamina_cost: 1.5,
-  wood_attack_speed: 0.7,
-  wood_dura_cost: 0.15,
-  wood_total_dura: 10.0,
+  wood_sword_owned: false,
+  wood_sword_price: 100,
+  wood_sword_level: 1,
+  wood_sword_level_max: 10,
+  wood_sword_atk: 5.0,
+  wood_sword_stamina_cost: 1.5,
+  wood_sword_attack_speed: 0.7,
+  wood_sword_dura_cost: 0.15,
+  wood_sword_total_dura: 10.0,
+
+  // upgrade mini-game
+  upgradeMode: null, // "normal" | "mid" | "high"
+  up: {
+    firstTapDone: false,
+    filled: 3,
+    openReady: false,
+    splitDone: false,
+    twoChests: false,
+
+    // normal stage
+    stage: "브론즈",
+
+    // mid star
+    star: 1,
+
+    // high stage
+    highStage: "희귀",
+  },
+
+  // modal context
+  modalKey: null, // "char"|"club"|"wood_sword"
 };
 
-function upgradeCost(level){
-  const x = Math.floor(level);
-  return x*x + 49;
+/* ---------- Utils ---------- */
+function mmss(sec){
+  sec = Math.max(0, Math.floor(sec));
+  const m = String(Math.floor(sec/60)).padStart(2,"0");
+  const s = String(sec%60).padStart(2,"0");
+  return `${m}:${s}`;
+}
+function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+function fmt2(n){ return (Math.round(n*100)/100).toString(); }
+function fmt3(n){ return (Math.round(n*1000)/1000).toString(); }
+
+function showNotice(el, text, ms=1200){
+  el.textContent = text;
+  if(ms>0) setTimeout(()=>{ el.textContent=""; }, ms);
 }
 
+function setHidden(el, yes){
+  if(!el) return;
+  el.classList.toggle("hidden", !!yes);
+}
+
+function showScreen(name){
+  state.screen = name;
+  Object.entries(screens).forEach(([k,el])=>{
+    setHidden(el, k !== name);
+  });
+
+  // 전투 화면 진입/이탈 처리
+  if(name === "battle") battleStart();
+  else battleStop();
+
+  refreshHUD();
+}
+
+/* ---------- HUD refresh ---------- */
+function refreshHUD(){
+  gemsText.textContent = String(state.gems);
+
+  // 서버럭
+  if(state.serverLuckIn > 0){
+    setHidden(serverLuckLine, false);
+    serverLuckText.textContent = mmss(state.serverLuckIn);
+  }else{
+    setHidden(serverLuckLine, true);
+  }
+
+  // 메인 선택 문구
+  if(state.selectedCharacter && state.selectedWeapon){
+    needSelectText.textContent = `선택됨: 네모 / ${state.selectedWeapon === "club" ? "나무몽둥이" : "목검"}`;
+  }else{
+    needSelectText.textContent = "캐릭터/주무기 선택 필요";
+  }
+
+  // 상점 무료 표시
+  if(state.shopFreeIn <= 0){
+    shopFreeStatus.textContent = "10개";
+    shopFreeTimer.textContent = "";
+  }else{
+    shopFreeStatus.textContent = "이미 받은 아이템입니다";
+    shopFreeTimer.textContent = `${mmss(state.shopFreeIn)}초 후 무료`;
+  }
+
+  if(state.serverLuckIn > 0){
+    shopLuckTimer.textContent = `${mmss(state.serverLuckIn)} 남음`;
+  }else{
+    shopLuckTimer.textContent = "";
+  }
+
+  // box 가격
+  priceNormal.textContent = state.free_normal_used ? `${state.PRICE_NORMAL} 크리스탈` : "무료 1회 남음";
+  priceMid.textContent = state.free_mid_used ? `${state.PRICE_MID} 크리스탈` : "무료 1회 남음";
+  priceHigh.textContent = state.free_high_used ? `${state.PRICE_HIGH} 크리스탈` : "무료 1회 남음";
+}
+
+/* ---------- economy ---------- */
 function addGems(n){
   state.gems += n;
-  renderHUD();
-  renderMain();
-  renderShop();
+  refreshHUD();
 }
 function spendGems(n){
   if(state.gems < n) return false;
   state.gems -= n;
-  renderHUD();
-  renderMain();
-  renderShop();
+  refreshHUD();
   return true;
 }
-function serverLuckActive(){ return state.serverLuckIn > 0; }
 
-/* =========================
-   화면 전환 (한꺼번에 보이는 문제 방지)
-========================= */
-const screens = {
-  main: $("#screen-main"),
-  shop: $("#screen-shop"),
-  box: $("#screen-box"),
-  upgrade: $("#screen-upgrade"),
-  equip: $("#screen-equip"),
-  battle: $("#screen-battle"),
-};
-
-function showScreen(name){
-  Object.entries(screens).forEach(([k, el])=>{
-    el.classList.toggle("hidden", k !== name);
-  });
-
-  // 테마 HUD 색 느낌(간단)
-  const isWhite = (name === "battle");
-  $(".hud").style.color = isWhite ? "#000" : "#fff";
-
-  if(name === "battle"){
-    startBattle();
-  }else{
-    stopBattle();
-  }
-}
-
-/* =========================
-   HUD
-========================= */
-function renderHUD(){
-  $("#gemsText").textContent = String(state.gems);
-
-  const line = $("#serverLuckLine");
-  if(serverLuckActive()){
-    line.classList.remove("hidden");
-    $("#serverLuckText").textContent = mmss(state.serverLuckIn);
-  }else{
-    line.classList.add("hidden");
-  }
-}
-
-/* =========================
-   메인 화면
-========================= */
-let mainNoticeTO = null;
-function mainNotice(msg){
-  const el = $("#mainNotice");
-  el.textContent = msg;
-  clearTimeout(mainNoticeTO);
-  mainNoticeTO = setTimeout(()=> el.textContent="", 1400);
-}
-
-function renderMain(){
-  if(state.selected_character && state.selected_weapon){
-    $("#needSelectText").textContent = "선택됨: 네모 / " + (state.selected_weapon==="club" ? "나무몽둥이" : "목검");
-  }else{
-    $("#needSelectText").textContent = "캐릭터/주무기 선택 필요";
-  }
-
-  // 상점 무료면 버튼 강조(노랑)
-  const btnShop = $("#btnShop");
-  if(state.shopFreeIn <= 0){
-    btnShop.style.background = "yellow";
-  }else{
-    btnShop.style.background = "";
-  }
-}
-
-/* =========================
-   상점
-========================= */
-let shopNoticeTO = null;
-function shopNotice(msg){
-  const el = $("#shopNotice");
-  el.textContent = msg;
-  clearTimeout(shopNoticeTO);
-  shopNoticeTO = setTimeout(()=> el.textContent="", 1200);
-}
-
-function startShopCooldown(seconds=90){
-  clearInterval(state.shopFreeTimer);
-  state.shopFreeIn = Math.max(0, Math.floor(seconds));
-  state.shopFreeTimer = setInterval(()=>{
+/* ---------- shop timers ---------- */
+function startShopCooldown(sec=90){
+  state.shopFreeIn = Math.max(0, Math.floor(sec));
+  if(state.shopCooldownTimer) clearInterval(state.shopCooldownTimer);
+  state.shopCooldownTimer = setInterval(()=>{
     state.shopFreeIn -= 1;
     if(state.shopFreeIn <= 0){
       state.shopFreeIn = 0;
-      clearInterval(state.shopFreeTimer);
-      state.shopFreeTimer = null;
+      clearInterval(state.shopCooldownTimer);
+      state.shopCooldownTimer = null;
     }
-    renderShop();
-    renderMain();
+    refreshHUD();
   }, 1000);
 }
 
-function startServerLuck(seconds=60){
-  clearInterval(state.serverLuckTimer);
-  state.serverLuckIn = Math.max(1, Math.floor(seconds));
+function startServerLuck(sec=60){
+  state.serverLuckIn = Math.max(1, Math.floor(sec));
+  if(state.serverLuckTimer) clearInterval(state.serverLuckTimer);
   state.serverLuckTimer = setInterval(()=>{
     state.serverLuckIn -= 1;
     if(state.serverLuckIn <= 0){
@@ -196,1015 +262,890 @@ function startServerLuck(seconds=60){
       clearInterval(state.serverLuckTimer);
       state.serverLuckTimer = null;
     }
-    renderHUD();
-    renderShop();
-    renderBox();
+    refreshHUD();
   }, 1000);
-  renderHUD();
 }
+function serverLuckActive(){ return state.serverLuckIn > 0; }
 
-function renderShop(){
-  // 무료크리
-  if(state.shopFreeIn <= 0){
-    $("#shopFreeStatus").textContent = "10개";
-    $("#shopFreeTimer").textContent = "";
-  }else{
-    $("#shopFreeStatus").textContent = "이미 받은 아이템입니다";
-    $("#shopFreeTimer").textContent = `${mmss(state.shopFreeIn)}초 후 무료`;
-  }
+/* ---------- confirm / reward ---------- */
+let confirmYesCb = null;
+let confirmNoCb = null;
 
-  // 서버럭
-  $("#shopLuckTimer").textContent = serverLuckActive() ? `${mmss(state.serverLuckIn)} 남음` : "";
-}
-
-/* =========================
-   상자 선택
-========================= */
-let boxNoticeTO = null;
-function boxNotice(msg){
-  const el = $("#boxNotice");
-  el.textContent = msg;
-  clearTimeout(boxNoticeTO);
-  boxNoticeTO = setTimeout(()=> el.textContent="", 1200);
-}
-
-function renderBox(){
-  $("#priceNormal").textContent = (!state.free_normal_used) ? "무료 1회 남음" : `${state.PRICE_NORMAL} 크리스탈`;
-  $("#priceMid").textContent = (!state.free_mid_used) ? "무료 1회 남음" : `${state.PRICE_MID} 크리스탈`;
-  $("#priceHigh").textContent = (!state.free_high_used) ? "무료 1회 남음" : `${state.PRICE_HIGH} 크리스탈`;
-}
-
-/* =========================
-   Confirm / Reward
-========================= */
-const confirmEl = $("#confirm");
-let confirmYes = null;
-let confirmNo = null;
-
-function openConfirm(msg, onYes, onNo, theme="blue"){
-  $("#confirmMsg").textContent = msg;
-  confirmYes = onYes;
-  confirmNo = onNo;
-
-  const card = $(".confirm-card");
-  if(theme === "green") card.style.background = "var(--green)";
-  else if(theme === "pink") card.style.background = "var(--pink)";
-  else if(theme === "white") card.style.background = "#fff";
-  else card.style.background = "var(--blue)";
-
-  card.style.color = (theme === "white") ? "#000" : "#fff";
-
-  confirmEl.classList.remove("hidden");
+function openConfirm(message, onYes, onNo){
+  confirmMsg.textContent = message;
+  confirmYesCb = onYes || null;
+  confirmNoCb = onNo || null;
+  setHidden(confirm, false);
 }
 function closeConfirm(){
-  confirmEl.classList.add("hidden");
-  confirmYes = null;
-  confirmNo = null;
+  setHidden(confirm, true);
+  confirmYesCb = null;
+  confirmNoCb = null;
 }
-$("#confirmYes").addEventListener("click", ()=>{ if(confirmYes) confirmYes(); });
-$("#confirmNo").addEventListener("click", ()=>{ if(confirmNo) confirmNo(); });
 
-const rewardEl = $("#reward");
-let rewardQueue = [];
-function showReward(amount, bgTheme="pink", onDone){
-  rewardQueue.push({amount, bgTheme, onDone});
-  if(!rewardEl.classList.contains("hidden")) return;
-  nextReward();
+let rewardQueue = []; // amounts
+let rewardDoneCb = null;
+
+function openRewardQueue(amounts, doneCb){
+  rewardQueue = [...amounts];
+  rewardDoneCb = doneCb || null;
+  showNextReward();
 }
-function nextReward(){
+function showNextReward(){
   if(rewardQueue.length === 0){
-    rewardEl.classList.add("hidden");
+    setHidden(reward, true);
+    const cb = rewardDoneCb;
+    rewardDoneCb = null;
+    if(cb) cb();
     return;
   }
-  const {amount, bgTheme} = rewardQueue[0];
-  $("#rewardText").textContent = `크리스탈 ${amount}개를 획득했습니다!`;
-
-  const card = $(".reward-card");
-  if(bgTheme === "green") card.style.background = "var(--green)";
-  else if(bgTheme === "blue") card.style.background = "var(--blue)";
-  else if(bgTheme === "purple") card.style.background = "var(--purple)";
-  else card.style.background = "var(--pink)";
-
-  rewardEl.classList.remove("hidden");
+  const amt = rewardQueue[0];
+  rewardText.textContent = `크리스탈 ${amt}개를 획득했습니다!`;
+  setHidden(reward, false);
 }
-rewardEl.addEventListener("click", ()=>{
+function clickReward(){
   if(rewardQueue.length === 0) return;
-  const item = rewardQueue.shift();
-  rewardEl.classList.add("hidden");
-  addGems(item.amount);
-  setTimeout(()=>{
-    if(typeof item.onDone === "function") item.onDone();
-    nextReward();
-  }, 10);
-});
+  const amt = rewardQueue.shift();
+  setHidden(reward, true);
+  addGems(amt);
+  // 아주 짧게 텀
+  setTimeout(showNextReward, 20);
+}
 
-/* =========================
-   업그레이드(일반/중급/고급) 하나의 화면으로 처리
-========================= */
-const upgradeUI = {
-  tapHint: $("#tapHint"),
-  title: $("#upgradeTitle"),
-  tapArea: $("#tapArea"),
-  boxA: $("#boxA"),
-  boxB: $("#boxB"),
-  dots: $("#dots"),
-};
-
-let upgradeMode = null; // "normal" | "mid" | "high"
-let uStage = null;
-let uFilled = 3;
-let uOpenReady = false;
-let uSplitDone = false;
-let uTwo = false;
-
+/* ---------- upgrade game ---------- */
 function resetUpgrade(mode){
-  upgradeMode = mode;
-  uFilled = 3;
-  uOpenReady = false;
-  uSplitDone = false;
-  uTwo = false;
+  state.upgradeMode = mode;
+  state.up.firstTapDone = false;
+  state.up.filled = 3;
+  state.up.openReady = false;
+  state.up.splitDone = false;
+  state.up.twoChests = false;
 
-  if(mode === "normal") uStage = "브론즈";
-  if(mode === "mid") uStage = 1; // star
-  if(mode === "high") uStage = "희귀";
-
-  // 박스 이모지
   if(mode === "normal"){
-    upgradeUI.boxA.textContent = "📦";
-    upgradeUI.boxB.textContent = "📦";
+    state.up.stage = "브론즈";
+    boxA.textContent = "📦";
+    boxB.textContent = "📦";
   }else if(mode === "mid"){
-    upgradeUI.boxA.textContent = "🎁";
-    upgradeUI.boxB.textContent = "🎁";
+    state.up.star = 1;
+    boxA.textContent = "🎁";
+    boxB.textContent = "🎁";
   }else{
-    upgradeUI.boxA.textContent = "🧰";
-    upgradeUI.boxB.textContent = "🧰";
+    state.up.highStage = "희귀";
+    boxA.textContent = "🧰";
+    boxB.textContent = "🧰";
   }
 
-  // 탭힌트 보이기
-  upgradeUI.tapHint.classList.remove("hidden");
-  renderUpgrade();
+  // UI
+  setHidden(boxB, true);
+  boxA.classList.remove("big");
+  boxB.classList.remove("big");
+  setHidden(tapHint, false);
+  dots.textContent = "● ● ●";
+  updateUpgradeTitle();
 }
 
-function dotsText(){
-  const arr = [];
-  for(let i=0;i<3;i++) arr.push(i<uFilled ? "●" : "○");
-  return arr.join(" ");
-}
-
-function splitProb(){
-  return serverLuckActive() ? 0.15 : 0.10;
-}
-
-function renderUpgrade(){
-  // 타이틀
-  if(upgradeMode === "mid"){
-    upgradeUI.title.textContent = "★".repeat(uStage);
+function updateUpgradeTitle(){
+  const mode = state.upgradeMode;
+  if(mode === "normal"){
+    upgradeTitle.textContent = state.up.stage;
+  }else if(mode === "mid"){
+    upgradeTitle.textContent = "★".repeat(state.up.star);
   }else{
-    upgradeUI.title.textContent = String(uStage);
-  }
-
-  // dots
-  upgradeUI.dots.textContent = uOpenReady ? "" : dotsText();
-
-  // 2개 상자 표시
-  upgradeUI.boxB.classList.toggle("hidden", !uTwo);
-
-  // 열 준비면 박스 크기 크게
-  const size = uOpenReady ? "132px" : "92px";
-  upgradeUI.boxA.style.fontSize = size;
-  upgradeUI.boxB.style.fontSize = size;
-
-  // 고급은 단계별 배경 변경
-  if(upgradeMode === "high"){
-    const bgMap = {
+    upgradeTitle.textContent = state.up.highStage;
+    // 고급은 스테이지별 배경 변경(파이썬 버전 느낌)
+    const bgByStage = {
       "희귀":"#1aa84b",
       "초희귀":"#1f5fbf",
       "영웅":"#7a2cff",
       "신화":"#ff2b2b",
       "전설":"#ffd400",
-      "울트라 전설":"#ffffff",
+      "울트라 전설":"#ffffff"
     };
-    const bg = bgMap[uStage] || state.PINK_BG;
+    const bg = bgByStage[state.up.highStage] || "#ff6fb2";
     screens.upgrade.style.background = bg;
+    // 글자색
     const fg = (bg.toLowerCase()==="#ffffff") ? "#000" : "#fff";
     screens.upgrade.style.color = fg;
-    upgradeUI.tapArea.style.borderColor = (fg==="#000") ? "rgba(0,0,0,.7)" : "rgba(255,255,255,.85)";
-    upgradeUI.tapHint.style.color = fg;
-    upgradeUI.title.style.color = fg;
-    upgradeUI.dots.style.color = fg;
-    upgradeUI.boxA.style.color = fg;
-    upgradeUI.boxB.style.color = fg;
+  }
+}
+
+function dotsText(){
+  const f = state.up.filled;
+  return [0,1,2].map(i => (i < f ? "●" : "○")).join(" ");
+}
+
+function splitProb(){
+  // normal/mid: 서버럭이면 0.15 아니면 0.10, high는 0.10 고정
+  if(state.upgradeMode === "high") return 0.10;
+  return serverLuckActive() ? 0.15 : 0.10;
+}
+
+function normalNextStageProbBase(stage){
+  if(stage==="브론즈") return ["실버",0.70];
+  if(stage==="실버") return ["골드",0.60];
+  if(stage==="골드") return ["에메랄드",0.50];
+  if(stage==="에메랄드") return ["다이아",0.30];
+  if(stage==="다이아") return ["레드 다이아",0.10];
+  return [null,0];
+}
+function normalReward(stage){
+  return {"브론즈":1,"실버":2,"골드":3,"에메랄드":5,"다이아":7,"레드 다이아":10}[stage] || 1;
+}
+
+const midP = {1:0.35,2:0.25,3:0.15,4:0.05};
+function midReward(star){
+  return {1:7,2:10,3:15,4:25,5:37}[star] || 7;
+}
+
+function highNextStageProbBase(stage){
+  if(stage==="희귀") return ["초희귀",0.75];
+  if(stage==="초희귀") return ["영웅",0.50];
+  if(stage==="영웅") return ["신화",0.35];
+  if(stage==="신화") return ["전설",0.15];
+  if(stage==="전설") return ["울트라 전설",0.05];
+  return [null,0];
+}
+function highReward(stage){
+  return {"희귀":20,"초희귀":25,"영웅":30,"신화":50,"전설":100,"울트라 전설":300}[stage] || 20;
+}
+
+/* ✅ 탭 버그(점 2개씩 빠짐) 방지용 락 */
+let tapLock = false;
+
+function onUpgradeTap(e){
+  // 모바일에서 pointerdown + click 중복 방지
+  if(e) e.preventDefault?.();
+  if(tapLock) return;
+  tapLock = true;
+  setTimeout(()=> tapLock = false, 30);
+
+  // 첫 탭이면 힌트 숨김
+  if(!state.up.firstTapDone){
+    state.up.firstTapDone = true;
+    setHidden(tapHint, true);
+  }
+
+  // 이미 열릴 준비면 보상
+  if(state.up.openReady){
+    const times = state.up.twoChests ? 2 : 1;
+    let amt = 1;
+    if(state.upgradeMode==="normal") amt = normalReward(state.up.stage);
+    else if(state.upgradeMode==="mid") amt = midReward(state.up.star);
+    else amt = highReward(state.up.highStage);
+
+    const arr = Array(times).fill(amt);
+    openRewardQueue(arr, ()=>{
+      // ✅ 보상 끝나면 무조건 box 선택 화면으로
+      showScreen("box");
+    });
+    return;
+  }
+
+  // 쪼개기
+  if(!state.up.splitDone && Math.random() < splitProb()){
+    state.up.twoChests = true;
+    state.up.splitDone = true;
+    state.up.filled = 3;
+    setHidden(boxB, false);
+    dots.textContent = dotsText();
+    return;
+  }
+
+  // ✅ 점은 1개씩만
+  state.up.filled = Math.max(0, state.up.filled - 1);
+
+  // 단계업
+  if(state.upgradeMode==="normal"){
+    let [nxt, p] = normalNextStageProbBase(state.up.stage);
+    if(nxt){
+      if(serverLuckActive()) p = Math.min(1, p + 0.05);
+      if(Math.random() < p){
+        state.up.stage = nxt;
+        state.up.filled = 3;
+        state.up.openReady = false;
+        dots.textContent = dotsText();
+        updateUpgradeTitle();
+        return;
+      }
+    }
+  }else if(state.upgradeMode==="mid"){
+    if(state.up.star < 5){
+      let p = midP[state.up.star] || 0;
+      if(serverLuckActive()) p = Math.min(1, p + 0.05);
+      if(Math.random() < p){
+        state.up.star += 1;
+        state.up.filled = 3;
+        state.up.openReady = false;
+        dots.textContent = dotsText();
+        updateUpgradeTitle();
+        return;
+      }
+    }
   }else{
-    screens.upgrade.style.background = "var(--pink)";
-    screens.upgrade.style.color = "#fff";
-    upgradeUI.tapArea.style.borderColor = "rgba(255,255,255,.85)";
-    upgradeUI.tapHint.style.color = "#fff";
-    upgradeUI.title.style.color = "#fff";
-    upgradeUI.dots.style.color = "#fff";
-    upgradeUI.boxA.style.color = "#fff";
-    upgradeUI.boxB.style.color = "#fff";
-  }
-}
-
-function normalReward(){
-  const map = {"브론즈":1,"실버":2,"골드":3,"에메랄드":5,"다이아":7,"레드 다이아":10};
-  return map[uStage] ?? 1;
-}
-function normalNextProb(){
-  let nxt=null, p=0;
-  if(uStage==="브론즈"){ nxt="실버"; p=0.70; }
-  else if(uStage==="실버"){ nxt="골드"; p=0.60; }
-  else if(uStage==="골드"){ nxt="에메랄드"; p=0.50; }
-  else if(uStage==="에메랄드"){ nxt="다이아"; p=0.30; }
-  else if(uStage==="다이아"){ nxt="레드 다이아"; p=0.10; }
-  if(serverLuckActive()) p = Math.min(1, p+0.05);
-  return [nxt, p];
-}
-
-function midReward(){
-  const map = {1:7,2:10,3:15,4:25,5:37};
-  return map[uStage] ?? 7;
-}
-function midProb(){
-  let p = 0;
-  if(uStage===1) p=0.35;
-  else if(uStage===2) p=0.25;
-  else if(uStage===3) p=0.15;
-  else if(uStage===4) p=0.05;
-  if(serverLuckActive()) p = Math.min(1, p+0.05);
-  return p;
-}
-
-function highReward(){
-  const map = {"희귀":20,"초희귀":25,"영웅":30,"신화":50,"전설":100,"울트라 전설":300};
-  return map[uStage] ?? 20;
-}
-function highNextProb(){
-  let nxt=null, p=0;
-  if(uStage==="희귀"){ nxt="초희귀"; p=0.75; }
-  else if(uStage==="초희귀"){ nxt="영웅"; p=0.50; }
-  else if(uStage==="영웅"){ nxt="신화"; p=0.35; }
-  else if(uStage==="신화"){ nxt="전설"; p=0.15; }
-  else if(uStage==="전설"){ nxt="울트라 전설"; p=0.05; }
-  if(serverLuckActive()) p = Math.min(1, p+0.05);
-  return [nxt, p];
-}
-
-function onTapUpgrade(){
-  // 첫 탭이면 힌트 제거
-  if(!upgradeUI.tapHint.classList.contains("hidden")){
-    upgradeUI.tapHint.classList.add("hidden");
-  }
-
-  if(uOpenReady){
-    const times = uTwo ? 2 : 1;
-    const amt = (upgradeMode==="normal") ? normalReward()
-            : (upgradeMode==="mid") ? midReward()
-            : highReward();
-
-    // ✅ 보상 다 받고 나면 박스 선택 화면으로 “바로” 돌아가게
-    for(let i=0;i<times;i++){
-      showReward(amt, (upgradeMode==="high" && uStage==="울트라 전설") ? "white" : "pink", (i===times-1) ? ()=>{
-        showScreen("box");
-        renderBox();
-      } : null);
+    let [nxt, p] = highNextStageProbBase(state.up.highStage);
+    if(nxt){
+      if(serverLuckActive()) p = Math.min(1, p + 0.05);
+      if(Math.random() < p){
+        state.up.highStage = nxt;
+        state.up.filled = 3;
+        state.up.openReady = false;
+        dots.textContent = dotsText();
+        updateUpgradeTitle();
+        return;
+      }
     }
+  }
+
+  // 열릴 준비
+  if(state.up.filled === 0){
+    state.up.openReady = true;
+    // 상자 크게
+    boxA.classList.add("big");
+    boxB.classList.add("big");
+    dots.textContent = "";
     return;
   }
 
-  // 분열 확률
-  if(!uSplitDone && Math.random() < splitProb()){
-    uTwo = true;
-    uSplitDone = true;
-    uFilled = 3;
-    renderUpgrade();
-    return;
-  }
-
-  // 동그라미는 “1개씩만” 감소
-  uFilled = Math.max(0, uFilled - 1);
-
-  // 단계 업
-  if(upgradeMode === "normal"){
-    const [nxt, p] = normalNextProb();
-    if(nxt && Math.random() < p){
-      uStage = nxt;
-      uFilled = 3;
-      uOpenReady = false;
-      renderUpgrade();
-      return;
-    }
-  }else if(upgradeMode === "mid"){
-    if(uStage < 5 && Math.random() < midProb()){
-      uStage += 1;
-      uFilled = 3;
-      uOpenReady = false;
-      renderUpgrade();
-      return;
-    }
-  }else{
-    const [nxt, p] = highNextProb();
-    if(nxt && Math.random() < p){
-      uStage = nxt;
-      uFilled = 3;
-      uOpenReady = false;
-      renderUpgrade();
-      return;
-    }
-  }
-
-  if(uFilled === 0){
-    uOpenReady = true;
-    renderUpgrade();
-    return;
-  }
-
-  renderUpgrade();
+  // 일반 업데이트
+  dots.textContent = dotsText();
 }
 
-/* =========================
-   장비(탭/슬롯/상세)
-========================= */
-const equip = {
-  tab: "char",
-  grid: $("#equipGrid"),
-  modal: $("#modal"),
-  modalTitle: $("#modalTitle"),
-  modalBig: $("#modalBig"),
-  modalDesc: $("#modalDesc"),
-  modalStats: $("#modalStats"),
-  modalNotice: $("#modalNotice"),
-  btnSelect: $("#btnSelect"),
-  btnMainAction: $("#btnMainAction"),
-  currentKey: null, // "char"|"club"|"wood"
-};
-
-function openModal(theme="green"){
-  // 배경 테마
-  const card = $(".modal-card");
-  if(theme === "blue") card.style.background = "var(--blue)";
-  else if(theme === "pink") card.style.background = "var(--pink)";
-  else card.style.background = "var(--green)";
-  equip.modal.classList.remove("hidden");
+/* ---------- equip modal data ---------- */
+function charUpgradeCost(){
+  const x = state.char_level|0;
+  return x*x + 49;
 }
-function closeModal(){
-  equip.modal.classList.add("hidden");
-  equip.currentKey = null;
-  equip.modalNotice.textContent = "";
+function clubUpgradeCost(){
+  const x = state.club_level|0;
+  return x*x + 49;
 }
-
-function modalNotice(msg){
-  equip.modalNotice.textContent = msg;
-  setTimeout(()=> equip.modalNotice.textContent="", 1200);
+function woodUpgradeCost(){
+  const x = state.wood_sword_level|0;
+  return x*x + 49;
 }
 
 function weaponData(key){
-  if(key === "club"){
+  if(key==="club"){
     return {
       owned: true,
       name: "나무몽둥이",
       emoji: "🪵",
       desc: "나무몽둥이는 초보자를 위한 초급용 아이템입니다.\n대미지와 내구도가 약합니다.",
       level: state.club_level,
-      max: state.club_level_max,
+      level_max: state.club_level_max,
       atk: state.club_atk,
       stam: state.club_stamina_cost,
       spd: state.club_attack_speed,
-      dura: state.club_dura_cost,
-      total: state.club_total_dura,
-      canUpgrade: state.club_level < state.club_level_max,
-      cost: upgradeCost(state.club_level),
+      dura_cost: state.club_dura_cost,
+      total_dura: state.club_total_dura,
+      can_upgrade: state.club_level < state.club_level_max,
+      cost: clubUpgradeCost()
     };
   }
+  // wood_sword
   return {
-    owned: state.wood_owned,
+    owned: state.wood_sword_owned,
     name: "목검",
     emoji: "🗡️",
     desc: "초보자용 무기로 가격이 쌉니다.\n나무몽둥이보단 좋지만 여전히 데미지와 내구도가 적습니다.",
-    level: state.wood_level,
-    max: state.wood_level_max,
-    atk: state.wood_atk,
-    stam: state.wood_stamina_cost,
-    spd: state.wood_attack_speed,
-    dura: state.wood_dura_cost,
-    total: state.wood_total_dura,
-    canUpgrade: state.wood_owned && (state.wood_level < state.wood_level_max),
-    cost: upgradeCost(state.wood_level),
+    level: state.wood_sword_level,
+    level_max: state.wood_sword_level_max,
+    atk: state.wood_sword_atk,
+    stam: state.wood_sword_stamina_cost,
+    spd: state.wood_sword_attack_speed,
+    dura_cost: state.wood_sword_dura_cost,
+    total_dura: state.wood_sword_total_dura,
+    can_upgrade: state.wood_sword_owned && state.wood_sword_level < state.wood_sword_level_max,
+    cost: woodUpgradeCost()
   };
 }
 
-function renderEquip(){
-  // 탭 버튼
-  $$(".tab").forEach(btn=>{
-    btn.classList.toggle("active", btn.dataset.tab === equip.tab);
-  });
+/* ---------- equip grid ---------- */
+let currentTab = "char";
 
-  equip.grid.innerHTML = "";
+function renderEquipGrid(){
+  equipGrid.innerHTML = "";
 
-  const makeSlot = ({emoji, name, levelText="", statusText="", onClick})=>{
-    const div = document.createElement("div");
-    div.className = "slot";
-    div.innerHTML = `
-      <div class="slot-level">${levelText}</div>
-      <div class="slot-emo">${emoji}</div>
-      <div class="slot-name">${name}</div>
-      <div class="slot-status">${statusText}</div>
+  const makeSlot = (emo, name, badgeText, subText, onClick) => {
+    const d = document.createElement("div");
+    d.className = "slot";
+    d.innerHTML = `
+      <div class="badge">${badgeText || ""}</div>
+      <div class="emo">${emo}</div>
+      <div class="name">${name}</div>
+      <div class="sub">${subText || ""}</div>
     `;
-    div.addEventListener("click", onClick);
-    return div;
+    d.addEventListener("click", onClick);
+    return d;
   };
 
-  if(equip.tab === "char"){
-    equip.grid.appendChild(makeSlot({
-      emoji:"⬛",
-      name:"네모",
-      levelText:String(state.char_level),
-      statusText:(state.char_level >= state.char_level_max ? "맥시멈 레벨" : ""),
-      onClick: ()=> openCharDetail()
+  if(currentTab==="char"){
+    equipGrid.appendChild(makeSlot("⬛", "네모", String(state.char_level), (state.char_level>=state.char_level_max)?"맥시멈 레벨":"", ()=>{
+      openModal("char");
     }));
-    // 빈칸 4개
-    for(let i=0;i<4;i++){
-      equip.grid.appendChild(makeSlot({emoji:"🙂", name:"", onClick: ()=>{} }));
-    }
+    equipGrid.appendChild(makeSlot("🙂","🙂","","", ()=>{}));
+    equipGrid.appendChild(makeSlot("🙂","🙂","","", ()=>{}));
+    equipGrid.appendChild(makeSlot("🙂","🙂","","", ()=>{}));
+    equipGrid.appendChild(makeSlot("🙂","🙂","","", ()=>{}));
   }
-  else if(equip.tab === "mainw"){
+  else if(currentTab==="mainw"){
     // club
-    equip.grid.appendChild(makeSlot({
-      emoji:"🪵",
-      name:"나무몽둥이",
-      levelText:String(state.club_level),
-      statusText:(state.club_level>=state.club_level_max ? "맥시멈 레벨" : ""),
-      onClick: ()=> openWeaponDetail("club")
-    }));
-    // wood sword
-    equip.grid.appendChild(makeSlot({
-      emoji:"🗡️",
-      name:"목검",
-      levelText:(state.wood_owned ? String(state.wood_level) : ""),
-      statusText:(state.wood_owned ? (state.wood_level>=state.wood_level_max ? "맥시멈 레벨" : "") : `구매:${state.wood_price}크리스탈`),
-      onClick: ()=> openWeaponDetail("wood")
-    }));
-    // 빈칸 3개
-    for(let i=0;i<3;i++){
-      equip.grid.appendChild(makeSlot({emoji:"⚔️", name:"", onClick: ()=>{} }));
-    }
+    equipGrid.appendChild(makeSlot("🪵","나무몽둥이", String(state.club_level),
+      (state.club_level>=state.club_level_max)?"맥시멈 레벨":"", ()=>{
+        openModal("club");
+      }));
+    // wood sword (스탯은 무조건 보임)
+    equipGrid.appendChild(makeSlot("🗡️","목검",
+      state.wood_sword_owned ? String(state.wood_sword_level) : "",
+      state.wood_sword_owned ? ((state.wood_sword_level>=state.wood_sword_level_max)?"맥시멈 레벨":"") : `구매:${state.wood_sword_price}크리스탈`,
+      ()=>{ openModal("wood_sword"); }
+    ));
+    equipGrid.appendChild(makeSlot("⚔️","⚔️","","", ()=>{}));
+    equipGrid.appendChild(makeSlot("⚔️","⚔️","","", ()=>{}));
+    equipGrid.appendChild(makeSlot("⚔️","⚔️","","", ()=>{}));
   }
-  else if(equip.tab === "subw"){
-    for(let i=0;i<5;i++){
-      equip.grid.appendChild(makeSlot({emoji:"🛡️", name:"", onClick: ()=>{} }));
-    }
+  else if(currentTab==="subw"){
+    for(let i=0;i<5;i++) equipGrid.appendChild(makeSlot("🛡️","🛡️","","", ()=>{}));
   }
   else{
-    for(let i=0;i<5;i++){
-      equip.grid.appendChild(makeSlot({emoji:"🔮", name:"", onClick: ()=>{} }));
-    }
+    for(let i=0;i<5;i++) equipGrid.appendChild(makeSlot("🔮","🔮","","", ()=>{}));
   }
 }
 
-function openCharDetail(){
-  equip.currentKey = "char";
-  equip.modalTitle.textContent = "네모";
-  equip.modalBig.textContent = "⬛";
-  equip.modalDesc.textContent = "기본캐릭터";
-  equip.modalStats.innerHTML = `
-    <div>레벨: ${state.char_level}</div>
-    <div>체력: ${fmt2(state.char_hp)}</div>
-    <div>이동속도: ${fmt2(state.char_speed)}</div>
-    <div>스테미너: ${Math.floor(state.char_stamina)}</div>
-  `;
+function openModal(key){
+  state.modalKey = key;
+  modalNotice.textContent = "";
+  setHidden(modal, false);
 
-  // 선택 버튼
-  equip.btnSelect.textContent = state.selected_character ? "선택됨" : "선택";
-  equip.btnSelect.disabled = !!state.selected_character;
+  // theme (equip가 green이니까 green 그대로)
+  modalTitle.textContent = "상세";
 
-  // 업그레이드 버튼
-  if(state.char_level < state.char_level_max){
-    const cost = upgradeCost(state.char_level);
-    equip.btnMainAction.textContent = `업그레이드하기: ${cost} 크리스탈`;
-    equip.btnMainAction.disabled = false;
-  }else{
-    equip.btnMainAction.textContent = "맥시멈 레벨";
-    equip.btnMainAction.disabled = true;
-  }
+  if(key==="char"){
+    modalTitle.textContent = "네모";
+    modalBig.textContent = "⬛";
+    modalDesc.textContent = "기본캐릭터";
 
-  equip.btnSelect.onclick = ()=>{
-    state.selected_character = true;
-    closeModal();
-    renderMain();
-  };
+    modalStats.innerHTML = `
+      <div>레벨: ${state.char_level}</div>
+      <div>체력: ${fmt2(state.char_hp)}</div>
+      <div>이동속도: ${fmt2(state.char_speed)}</div>
+      <div>스테미너: ${state.char_stamina|0}</div>
+    `;
 
-  equip.btnMainAction.onclick = ()=>{
-    if(state.char_level >= state.char_level_max){
-      modalNotice("이미 맥시멈 레벨입니다!");
-      return;
-    }
-    const cost = upgradeCost(state.char_level);
-    openConfirm(
-      `업그레이드 할까요?\n비용: ${cost} 크리스탈\n\n추가되는 능력치\n체력 +0.5\n이동속도 +0.01\n스테미너 +5`,
-      ()=>{
-        closeConfirm();
-        if(!spendGems(cost)){
-          modalNotice("크리스탈이 부족합니다!");
-          return;
-        }
-        state.char_level += 1;
-        state.char_hp += 0.5;
-        state.char_speed += 0.01;
-        state.char_stamina += 5;
-        openCharDetail();
-        renderEquip();
-        modalNotice("업그레이드 완료!");
-      },
-      ()=> closeConfirm(),
-      "green"
-    );
-  };
+    btnSelect.textContent = state.selectedCharacter ? "선택됨" : "선택";
+    btnSelect.disabled = !!state.selectedCharacter;
 
-  openModal("green");
-}
-
-function fmt2(n){
-  // Tk 버전처럼 끝 0 정리
-  const s = (Math.round(n*100)/100).toString();
-  return s;
-}
-
-function openWeaponDetail(which){
-  // which: "club" | "wood"
-  const key = (which === "club") ? "club" : "wood";
-  equip.currentKey = key;
-
-  const d = weaponData(key === "club" ? "club" : "wood");
-
-  equip.modalTitle.textContent = d.name;
-  equip.modalBig.textContent = d.emoji;
-  equip.modalDesc.textContent = d.desc;
-
-  // ✅ 목검은 구매 안 해도 “스텟은 무조건 보여줌”
-  equip.modalStats.innerHTML = `
-    <div>레벨: ${d.level}</div>
-    <div>공격력: ${fmt2(d.atk)}</div>
-    <div>소모 스테미너: ${fmt2(d.stam)}/번</div>
-    <div>공격 속도: ${fmt2(d.spd)}초</div>
-    <div>내구도소모: ${trim3(d.dura)}/번</div>
-    <div>총 내구도: ${fmt2(d.total)}</div>
-  `;
-
-  // 선택 버튼
-  const canSelect = (key === "club") || (key === "wood" && state.wood_owned);
-  equip.btnSelect.textContent = (state.selected_weapon === (key==="club"?"club":"wood_sword")) ? "선택됨" : "선택";
-  equip.btnSelect.disabled = (state.selected_weapon === (key==="club"?"club":"wood_sword"));
-  equip.btnSelect.onclick = ()=>{
-    if(!canSelect){
-      modalNotice("구매 후 선택 가능합니다!");
-      return;
-    }
-    state.selected_weapon = (key==="club") ? "club" : "wood_sword";
-    closeModal();
-    renderMain();
-  };
-
-  // 메인 액션 버튼(구매/업그레이드)
-  if(key === "wood" && !state.wood_owned){
-    equip.btnMainAction.textContent = `구매:${state.wood_price}크리스탈`;
-    equip.btnMainAction.disabled = false;
-    equip.btnMainAction.onclick = ()=>{
-      openConfirm(
-        `목검을 구매하시겠습니까?\n비용: ${state.wood_price} 크리스탈`,
-        ()=>{
-          closeConfirm();
-          // ✅ 크리스탈 부족해도 "구매하시겠습니까" 창은 뜨고, 예 누르면 부족 알림
-          if(!spendGems(state.wood_price)){
-            modalNotice("크리스탈이 부족합니다!");
-            return;
-          }
-          state.wood_owned = true;
-          modalNotice("구매 완료!");
-          openWeaponDetail("wood");
-          renderEquip();
-        },
-        ()=> closeConfirm(),
-        "green"
-      );
-    };
-  }else{
-    if(d.canUpgrade){
-      equip.btnMainAction.textContent = `업그레이드하기: ${d.cost} 크리스탈`;
-      equip.btnMainAction.disabled = false;
-      equip.btnMainAction.onclick = ()=>{
-        openConfirm(
-          `${d.name} 강화할까요?\n비용: ${d.cost} 크리스탈\n\n추가되는 능력치\n공격력 +0.1\n소모 스테미너 -0.01\n내구도소모 -0.005/번\n총 내구도 +0.5`,
-          ()=>{
-            closeConfirm();
-            if(!spendGems(d.cost)){
-              modalNotice("크리스탈이 부족합니다!");
-              return;
-            }
-            if(key === "club"){
-              state.club_level += 1;
-              state.club_atk += 0.1;
-              state.club_stamina_cost -= 0.01;
-              state.club_dura_cost -= 0.005;
-              state.club_total_dura += 0.5;
-            }else{
-              state.wood_level += 1;
-              state.wood_atk += 0.1;
-              state.wood_stamina_cost -= 0.01;
-              state.wood_dura_cost -= 0.005;
-              state.wood_total_dura += 0.5;
-            }
-            modalNotice("업그레이드 완료!");
-            openWeaponDetail(which);
-            renderEquip();
-          },
-          ()=> closeConfirm(),
-          "green"
-        );
-      };
+    if(state.char_level < state.char_level_max){
+      btnMainAction.textContent = `업그레이드하기: ${charUpgradeCost()} 크리스탈`;
+      btnMainAction.disabled = false;
     }else{
-      equip.btnMainAction.textContent = "맥시멈 레벨";
-      equip.btnMainAction.disabled = true;
-      equip.btnMainAction.onclick = ()=>{};
+      btnMainAction.textContent = "맥시멈 레벨";
+      btnMainAction.disabled = true;
+    }
+  }else{
+    const d = weaponData(key);
+    modalTitle.textContent = d.name;
+    modalBig.textContent = d.emoji;
+    modalDesc.textContent = d.desc;
+
+    modalStats.innerHTML = `
+      <div>레벨: ${d.level}</div>
+      <div>공격력: ${fmt2(d.atk)}</div>
+      <div>소모 스테미너: ${fmt2(d.stam)}/번</div>
+      <div>공격 속도: ${fmt2(d.spd)}초</div>
+      <div>내구도소모: ${fmt3(d.dura_cost)}/번</div>
+      <div>총 내구도: ${fmt2(d.total_dura)}</div>
+    `;
+
+    // 선택 버튼
+    const selectable = (key==="club") || (key==="wood_sword" && state.wood_sword_owned);
+    if(state.selectedWeapon === key){
+      btnSelect.textContent = "선택됨";
+      btnSelect.disabled = true;
+    }else{
+      btnSelect.textContent = "선택";
+      btnSelect.disabled = !selectable;
+    }
+
+    // 메인 액션 버튼(목검은 구매/업그레이드)
+    if(key==="wood_sword" && !state.wood_sword_owned){
+      btnMainAction.textContent = `구매:${state.wood_sword_price}크리스탈`;
+      btnMainAction.disabled = false;
+    }else{
+      if(d.can_upgrade){
+        btnMainAction.textContent = `업그레이드하기: ${d.cost} 크리스탈`;
+        btnMainAction.disabled = false;
+      }else{
+        btnMainAction.textContent = "맥시멈 레벨";
+        btnMainAction.disabled = true;
+      }
     }
   }
 
-  openModal("green");
+  refreshHUD();
+  renderEquipGrid(); // 배지 업데이트
 }
 
-function trim3(n){
-  // 0.150 -> 0.15 느낌
-  let s = (Math.round(n*1000)/1000).toString();
-  return s;
+function closeModal(){
+  setHidden(modal, true);
+  state.modalKey = null;
+  renderEquipGrid();
+  refreshHUD();
 }
 
-/* =========================
-   전투 시스템 (WASD + 클릭 슬래쉬)
-========================= */
+/* ---------- battle (canvas) ---------- */
 const battle = {
-  canvas: $("#battleCanvas"),
-  ctx: null,
-  running: false,
-  keys: new Set(),
+  running:false,
+  raf:null,
+  ctx:null,
+  w:0,h:0,
+  gridGap:48,
 
-  player: {x:200, y:200, size:34, speed:5},
-  grid: {gap:48, w:1},
+  player:{
+    x:200,y:200,size:34,speed:5
+  },
+  keys:new Set(),
 
-  lastAttack: 0,
-  slashes: [], // {t0, life, cx, cy, r, start, extent, theta}
-  raf: 0,
+  lastAttack:0,
+  slashes:[], // {x,y,r,theta,start,end,t0,life}
 };
 
-function weaponCooldown(){
-  if(state.selected_weapon === "wood_sword") return state.wood_attack_speed;
+function battleWeaponCooldown(){
+  if(state.selectedWeapon === "wood_sword") return state.wood_sword_attack_speed;
   return state.club_attack_speed;
 }
 
-function resizeBattle(){
-  const c = battle.canvas;
-  const rect = c.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  c.width = Math.floor(rect.width * dpr);
-  c.height = Math.floor(rect.height * dpr);
-  const ctx = battle.ctx;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+function battleResize(){
+  const rect = battleCanvas.getBoundingClientRect();
+  battleCanvas.width = Math.floor(rect.width * devicePixelRatio);
+  battleCanvas.height = Math.floor(rect.height * devicePixelRatio);
+  battle.ctx = battleCanvas.getContext("2d");
+  battle.ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  battle.w = rect.width;
+  battle.h = rect.height;
+  // center player
+  battle.player.x = battle.w/2;
+  battle.player.y = battle.h/2;
 }
 
 function drawGrid(){
   const ctx = battle.ctx;
-  const w = battle.canvas.getBoundingClientRect().width;
-  const h = battle.canvas.getBoundingClientRect().height;
-  ctx.lineWidth = battle.grid.w;
+  const gap = battle.gridGap;
+  ctx.lineWidth = 1;
   ctx.strokeStyle = "#000";
-  const gap = battle.grid.gap;
-  for(let x=0; x<=w; x+=gap){
-    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+  for(let x=0; x<=battle.w; x+=gap){
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,battle.h); ctx.stroke();
   }
-  for(let y=0; y<=h; y+=gap){
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  for(let y=0; y<=battle.h; y+=gap){
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(battle.w,y); ctx.stroke();
   }
-}
-
-function drawPlayer(){
-  const ctx = battle.ctx;
-  const p = battle.player;
-  ctx.fillStyle = "#000";
-  ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
 }
 
 function spawnSlash(mx,my){
-  const p = battle.player;
-  let dx = mx - p.x;
-  let dy = my - p.y;
-  if(dx === 0 && dy === 0) dx = 1;
+  const px = battle.player.x, py = battle.player.y;
+  let dx = mx - px, dy = my - py;
+  if(dx===0 && dy===0) dx = 1;
 
-  const theta = Math.atan2(dy, dx);
-  const deg = -theta * 180 / Math.PI;
-
+  const theta = Math.atan2(dy, dx);      // 화면 좌표
+  const deg = -theta * 180/Math.PI;      // canvas arc용 각 변환은 직접 계산 대신 라디안 사용
   const forward = 46;
-  const baseCx = p.x + Math.cos(theta)*forward;
-  const baseCy = p.y + Math.sin(theta)*forward;
+  const baseX = px + Math.cos(theta)*forward;
+  const baseY = py + Math.sin(theta)*forward;
 
   const r = 110;
+  const startX = baseX;
+  const startY = baseY - 34;
 
-  const startCx = baseCx;
-  const startCy = baseCy - 34;
-
-  const startAngle = deg - 85;
-  const endAngle = deg - 35;
+  // 파이썬 버전 느낌(위->아래)
+  const startAng = (deg - 85) * Math.PI/180;
+  const endAng = (deg - 35) * Math.PI/180;
 
   battle.slashes.push({
-    t0: performance.now(),
-    life: 200,
-    startAngle,
-    endAngle,
-    extent: 120,
-    theta,
+    x:startX, y:startY,
     r,
-    startCx,
-    startCy
+    theta,
+    a0:startAng,
+    a1:endAng,
+    t0: performance.now(),
+    life: 200 // ms
   });
 }
 
-function drawSlashes(){
+function drawSlash(s){
   const ctx = battle.ctx;
-  const now = performance.now();
+  const t = clamp((performance.now()-s.t0)/s.life, 0, 1);
 
-  battle.slashes = battle.slashes.filter(s => (now - s.t0) <= s.life);
+  const ang = s.a0 + (s.a1 - s.a0) * t;
 
-  for(const s of battle.slashes){
-    const t = clamp((now - s.t0)/s.life, 0, 1);
-    const ang = s.startAngle + (s.endAngle - s.startAngle)*t;
+  const drop = 60 * t;
+  const push = 20 * t;
+  const cx = s.x + Math.cos(s.theta)*push;
+  const cy = s.y + drop + Math.sin(s.theta)*push;
 
-    const drop = 60 * t;
-    let cx = s.startCx;
-    let cy = s.startCy + drop;
-
-    const push = 20 * t;
-    cx += Math.cos(s.theta)*push;
-    cy += Math.sin(s.theta)*push;
-
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.fillStyle = "#fff";
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 3;
-
-    // canvas arc는 라디안 (0=오른쪽, 시계방향이 양수)인데,
-    // 우리는 Tk 느낌만 살리면 돼서 “대충” 비슷하게 구현
-    const a0 = (-ang) * Math.PI/180;
-    const a1 = (-(ang + s.extent)) * Math.PI/180;
-
-    ctx.arc(cx, cy, s.r, a0, a1, true);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  }
+  // 부채꼴(PIESLICE 느낌)
+  const extent = 120 * Math.PI/180;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, s.r, ang, ang+extent, false);
+  ctx.closePath();
+  ctx.fillStyle = "#fff";
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#000";
+  ctx.stroke();
 }
 
-function movePlayer(){
-  const p = battle.player;
-  let dx=0, dy=0;
-  if(battle.keys.has("w")) dy -= p.speed;
-  if(battle.keys.has("s")) dy += p.speed;
-  if(battle.keys.has("a")) dx -= p.speed;
-  if(battle.keys.has("d")) dx += p.speed;
-
-  if(dx===0 && dy===0) return;
-
-  const rect = battle.canvas.getBoundingClientRect();
-  const half = p.size/2;
-  p.x = clamp(p.x + dx, half, rect.width - half);
-  p.y = clamp(p.y + dy, half, rect.height - half);
-}
-
-function loopBattle(){
+function battleLoop(){
   if(!battle.running) return;
 
-  const ctx = battle.ctx;
-  const rect = battle.canvas.getBoundingClientRect();
-  ctx.clearRect(0,0,rect.width,rect.height);
+  // clear
+  battle.ctx.clearRect(0,0,battle.w,battle.h);
 
+  // grid
   drawGrid();
-  movePlayer();
-  drawSlashes();
-  drawPlayer();
 
-  battle.raf = requestAnimationFrame(loopBattle);
+  // movement
+  let dx=0, dy=0;
+  if(battle.keys.has("w")) dy -= battle.player.speed;
+  if(battle.keys.has("s")) dy += battle.player.speed;
+  if(battle.keys.has("a")) dx -= battle.player.speed;
+  if(battle.keys.has("d")) dx += battle.player.speed;
+
+  if(dx!==0 || dy!==0){
+    battle.player.x = clamp(battle.player.x + dx, battle.player.size/2, battle.w - battle.player.size/2);
+    battle.player.y = clamp(battle.player.y + dy, battle.player.size/2, battle.h - battle.player.size/2);
+  }
+
+  // player
+  battle.ctx.fillStyle = "#000";
+  battle.ctx.fillRect(
+    battle.player.x - battle.player.size/2,
+    battle.player.y - battle.player.size/2,
+    battle.player.size,
+    battle.player.size
+  );
+
+  // slashes
+  battle.slashes = battle.slashes.filter(s => (performance.now()-s.t0) <= s.life);
+  for(const s of battle.slashes) drawSlash(s);
+
+  battle.raf = requestAnimationFrame(battleLoop);
 }
 
-function startBattle(){
-  if(battle.running) return;
-
-  battle.ctx = battle.canvas.getContext("2d");
-  battle.running = true;
-
-  // 캔버스가 section 전체를 채우게
-  const sec = screens.battle;
-  sec.style.padding = "0";
-
-  // 사이즈
-  resizeBattle();
-  window.addEventListener("resize", resizeBattle);
-
-  // 플레이어 중앙 배치
-  const rect = battle.canvas.getBoundingClientRect();
-  battle.player.x = rect.width/2;
-  battle.player.y = rect.height/2;
-
-  // 키 바인딩
-  battle.keys.clear();
-  window.addEventListener("keydown", onKeyDown);
-  window.addEventListener("keyup", onKeyUp);
-
-  // 클릭 공격
-  battle.canvas.addEventListener("pointerdown", onBattleClick);
-
-  loopBattle();
-}
-
-function stopBattle(){
-  if(!battle.running) return;
-  battle.running = false;
-  cancelAnimationFrame(battle.raf);
-  battle.raf = 0;
-
-  battle.slashes = [];
-  battle.keys.clear();
-
-  window.removeEventListener("resize", resizeBattle);
-  window.removeEventListener("keydown", onKeyDown);
-  window.removeEventListener("keyup", onKeyUp);
-  battle.canvas.removeEventListener("pointerdown", onBattleClick);
-}
-
-function onKeyDown(e){
-  const k = (e.key||"").toLowerCase();
+function onBattleKeyDown(e){
+  const k = (e.key || "").toLowerCase();
   if(["w","a","s","d"].includes(k)) battle.keys.add(k);
 }
-function onKeyUp(e){
-  const k = (e.key||"").toLowerCase();
+function onBattleKeyUp(e){
+  const k = (e.key || "").toLowerCase();
   battle.keys.delete(k);
 }
-
-function onBattleClick(e){
+function onBattlePointerDown(e){
+  // 클릭 공격
   const now = performance.now();
-  const cd = weaponCooldown()*1000;
+  const cd = battleWeaponCooldown()*1000;
   if(now - battle.lastAttack < cd) return;
   battle.lastAttack = now;
 
-  const rect = battle.canvas.getBoundingClientRect();
+  const rect = battleCanvas.getBoundingClientRect();
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
   spawnSlash(mx,my);
 }
 
-/* =========================
-   이벤트 연결
-========================= */
-// 공용 back 버튼들
-$$(".back").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    const to = btn.dataset.back;
-    if(to === "main") showScreen("main");
-  });
-});
-
-// 메인 버튼
-$("#btnStart").addEventListener("click", ()=> showScreen("main"));
-$("#btnShop").addEventListener("click", ()=>{
-  showScreen("shop");
-  renderShop();
-});
-$("#btnEquip").addEventListener("click", ()=>{
-  showScreen("equip");
-  renderEquip();
-});
-$("#btnBox").addEventListener("click", ()=>{
-  showScreen("box");
-  renderBox();
-});
-
-// 전투 시작
-$("#btnBattle").addEventListener("click", ()=>{
-  if(!state.selected_character || !state.selected_weapon){
-    mainNotice("캐릭터,주무기를 선택해주세요!");
+function battleStart(){
+  // 선택 체크
+  if(!state.selectedCharacter || !state.selectedWeapon){
+    showNotice(mainNotice, "캐릭터,주무기를 선택해주세요!");
+    showScreen("main");
     return;
   }
-  showScreen("battle");
-});
 
-// 전투 홈 버튼
-$("#btnBattleHome").addEventListener("click", ()=>{
-  openConfirm(
-    "메인화면으로 돌아가겠습니까?",
-    ()=>{ closeConfirm(); showScreen("main"); },
-    ()=> closeConfirm(),
-    "white"
-  );
-});
+  battle.running = true;
+  battleResize();
+  battle.lastAttack = 0;
+  battle.keys.clear();
+  battle.slashes = [];
 
-// 상점 클릭
-$("#shopFreeCard").addEventListener("click", ()=>{
-  if(state.shopFreeIn > 0) return;
-  addGems(10);
-  startShopCooldown(90);
-  showReward(10, "blue", null);
-  renderShop();
-});
-$("#shopLuckCard").addEventListener("click", ()=>{
-  openConfirm(
-    "정말로 구매하시겠습니까?",
-    ()=>{
+  window.addEventListener("resize", battleResize);
+  window.addEventListener("keydown", onBattleKeyDown);
+  window.addEventListener("keyup", onBattleKeyUp);
+  battleCanvas.addEventListener("pointerdown", onBattlePointerDown);
+
+  battleLoop();
+}
+function battleStop(){
+  if(!battle.running) return;
+  battle.running = false;
+  if(battle.raf) cancelAnimationFrame(battle.raf);
+  battle.raf = null;
+
+  window.removeEventListener("resize", battleResize);
+  window.removeEventListener("keydown", onBattleKeyDown);
+  window.removeEventListener("keyup", onBattleKeyUp);
+  battleCanvas.removeEventListener("pointerdown", onBattlePointerDown);
+}
+
+/* ---------- events wiring ---------- */
+function init(){
+  // start button: 너 HTML에 있는 걸 그대로 이어붙임
+  $("#btnStart").addEventListener("click", ()=> showScreen("main"));
+
+  $("#btnShop").addEventListener("click", ()=> showScreen("shop"));
+  $("#btnEquip").addEventListener("click", ()=>{
+    currentTab = "char";
+    setActiveTab("char");
+    renderEquipGrid();
+    showScreen("equip");
+  });
+  $("#btnBox").addEventListener("click", ()=> showScreen("box"));
+  $("#btnBattle").addEventListener("click", ()=> showScreen("battle"));
+
+  // back buttons (data-back)
+  $$(".back").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const to = b.getAttribute("data-back") || "main";
+      showScreen(to);
+    });
+  });
+
+  // shop free
+  shopFreeCard.addEventListener("click", ()=>{
+    if(state.shopFreeIn > 0) return;
+    addGems(10);
+    startShopCooldown(90);
+    openRewardQueue([10], ()=>{ /* stay */ });
+    refreshHUD();
+  });
+
+  // shop luck
+  shopLuckCard.addEventListener("click", ()=>{
+    openConfirm("정말로 구매하시겠습니까?", ()=>{
       closeConfirm();
       if(!spendGems(5)){
-        shopNotice("크리스탈이 부족합니다!");
+        showNotice(shopNotice, "크리스탈이 부족합니다!");
         return;
       }
-      shopNotice("서버 운 강화를 구매했습니다!");
+      showNotice(shopNotice, "서버 운 강화를 구매했습니다!");
       startServerLuck(60);
-    },
-    ()=> closeConfirm(),
-    "blue"
-  );
-});
-
-// 박스 선택
-$("#cardNormal").addEventListener("click", ()=>{
-  if(!state.free_normal_used){
-    state.free_normal_used = true;
-    showScreen("upgrade");
-    resetUpgrade("normal");
-    return;
-  }
-  if(!spendGems(state.PRICE_NORMAL)){
-    boxNotice("크리스탈이 부족합니다!");
-    return;
-  }
-  showScreen("upgrade");
-  resetUpgrade("normal");
-});
-$("#cardMid").addEventListener("click", ()=>{
-  if(!state.free_mid_used){
-    state.free_mid_used = true;
-    showScreen("upgrade");
-    resetUpgrade("mid");
-    return;
-  }
-  if(!spendGems(state.PRICE_MID)){
-    boxNotice("크리스탈이 부족합니다!");
-    return;
-  }
-  showScreen("upgrade");
-  resetUpgrade("mid");
-});
-$("#cardHigh").addEventListener("click", ()=>{
-  if(!state.free_high_used){
-    state.free_high_used = true;
-    showScreen("upgrade");
-    resetUpgrade("high");
-    return;
-  }
-  if(!spendGems(state.PRICE_HIGH)){
-    boxNotice("크리스탈이 부족합니다!");
-    return;
-  }
-  showScreen("upgrade");
-  resetUpgrade("high");
-});
-
-// 업그레이드 탭 영역 클릭
-upgradeUI.tapArea.addEventListener("click", onTapUpgrade);
-$("#screen-upgrade").addEventListener("click", (e)=>{
-  // 화면 다른 곳 눌러도 탭되게(원본처럼)
-  if(e.target.id === "screen-upgrade") onTapUpgrade();
-});
-
-// 장비 탭 클릭
-$$(".tab").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    equip.tab = btn.dataset.tab;
-    renderEquip();
+      refreshHUD();
+    }, ()=>{
+      closeConfirm();
+    });
   });
-});
 
-// 모달
-$("#modalClose").addEventListener("click", closeModal);
+  // box select
+  cardNormal.addEventListener("click", ()=>{
+    if(!state.free_normal_used){
+      state.free_normal_used = true;
+      resetUpgrade("normal");
+      showScreen("upgrade");
+      refreshHUD();
+      return;
+    }
+    if(!spendGems(state.PRICE_NORMAL)){
+      showNotice(boxNotice, "크리스탈이 부족합니다!");
+      return;
+    }
+    resetUpgrade("normal");
+    showScreen("upgrade");
+  });
 
-// confirm 외부 클릭 막고 싶으면 여기서 처리 가능(지금은 버튼만)
-confirmEl.addEventListener("click", (e)=>{
-  if(e.target === confirmEl) { /* 밖 클릭 무시 */ }
-});
+  cardMid.addEventListener("click", ()=>{
+    if(!state.free_mid_used){
+      state.free_mid_used = true;
+      resetUpgrade("mid");
+      showScreen("upgrade");
+      refreshHUD();
+      return;
+    }
+    if(!spendGems(state.PRICE_MID)){
+      showNotice(boxNotice, "크리스탈이 부족합니다!");
+      return;
+    }
+    resetUpgrade("mid");
+    showScreen("upgrade");
+  });
 
-/* =========================
-   초기 렌더
-========================= */
-function init(){
-  // 처음은 메인
+  cardHigh.addEventListener("click", ()=>{
+    if(!state.free_high_used){
+      state.free_high_used = true;
+      resetUpgrade("high");
+      showScreen("upgrade");
+      refreshHUD();
+      return;
+    }
+    if(!spendGems(state.PRICE_HIGH)){
+      showNotice(boxNotice, "크리스탈이 부족합니다!");
+      return;
+    }
+    resetUpgrade("high");
+    showScreen("upgrade");
+  });
+
+  // upgrade tap (✅ pointerdown만 사용해서 중복 탭 방지)
+  tapArea.addEventListener("pointerdown", onUpgradeTap);
+
+  // confirm
+  confirmYes.addEventListener("click", ()=>{
+    if(typeof confirmYesCb === "function") confirmYesCb();
+  });
+  confirmNo.addEventListener("click", ()=>{
+    if(typeof confirmNoCb === "function") confirmNoCb();
+    closeConfirm();
+  });
+
+  // reward
+  $("#reward").addEventListener("click", clickReward);
+
+  // tabs
+  $$(".tab").forEach(t=>{
+    t.addEventListener("click", ()=>{
+      const tab = t.getAttribute("data-tab");
+      currentTab = tab;
+      setActiveTab(tab);
+      renderEquipGrid();
+    });
+  });
+
+  // modal
+  modalClose.addEventListener("click", closeModal);
+  btnSelect.addEventListener("click", ()=>{
+    const key = state.modalKey;
+    if(!key) return;
+
+    if(key==="char"){
+      state.selectedCharacter = true;
+      openModal("char");
+      refreshHUD();
+      return;
+    }
+    if(key==="club"){
+      state.selectedWeapon = "club";
+      openModal("club");
+      refreshHUD();
+      return;
+    }
+    if(key==="wood_sword"){
+      if(!state.wood_sword_owned){
+        showNotice(modalNotice, "구매 후 선택 가능합니다!");
+        return;
+      }
+      state.selectedWeapon = "wood_sword";
+      openModal("wood_sword");
+      refreshHUD();
+      return;
+    }
+  });
+
+  btnMainAction.addEventListener("click", ()=>{
+    const key = state.modalKey;
+    if(!key) return;
+
+    if(key==="char"){
+      if(state.char_level >= state.char_level_max){
+        showNotice(modalNotice, "이미 맥시멈 레벨입니다!");
+        return;
+      }
+      const cost = charUpgradeCost();
+      openConfirm(
+        `업그레이드 할까요?\n비용: ${cost} 크리스탈\n\n추가되는 능력치\n체력 +0.5\n이동속도 +0.01\n스테미너 +5`,
+        ()=>{
+          closeConfirm();
+          if(!spendGems(cost)){
+            showNotice(modalNotice, "크리스탈이 부족합니다!");
+            return;
+          }
+          state.char_level += 1;
+          state.char_hp += 0.5;
+          state.char_speed += 0.01;
+          state.char_stamina += 5;
+          openModal("char");
+        },
+        ()=> closeConfirm()
+      );
+      return;
+    }
+
+    // weapon
+    if(key==="wood_sword" && !state.wood_sword_owned){
+      openConfirm(
+        `목검을 구매하시겠습니까?\n비용: ${state.wood_sword_price} 크리스탈`,
+        ()=>{
+          closeConfirm();
+          if(!spendGems(state.wood_sword_price)){
+            showNotice(modalNotice, "크리스탈이 부족합니다!");
+            return;
+          }
+          state.wood_sword_owned = true;
+          showNotice(modalNotice, "구매 완료!");
+          openModal("wood_sword");
+        },
+        ()=> closeConfirm()
+      );
+      return;
+    }
+
+    const d = weaponData(key);
+    if(!d.can_upgrade){
+      showNotice(modalNotice, "이미 맥시멈 레벨입니다!");
+      return;
+    }
+
+    openConfirm(
+      `${d.name} 강화할까요?\n비용: ${d.cost} 크리스탈\n\n추가되는 능력치\n공격력 +0.1\n소모 스테미너 -0.01\n내구도소모 -0.005/번\n총 내구도 +0.5`,
+      ()=>{
+        closeConfirm();
+        if(!spendGems(d.cost)){
+          showNotice(modalNotice, "크리스탈이 부족합니다!");
+          return;
+        }
+        if(key==="club"){
+          state.club_level += 1;
+          state.club_atk += 0.1;
+          state.club_stamina_cost -= 0.01;
+          state.club_dura_cost -= 0.005;
+          state.club_total_dura += 0.5;
+          openModal("club");
+        }else{
+          state.wood_sword_level += 1;
+          state.wood_sword_atk += 0.1;
+          state.wood_sword_stamina_cost -= 0.01;
+          state.wood_sword_dura_cost -= 0.005;
+          state.wood_sword_total_dura += 0.5;
+          openModal("wood_sword");
+        }
+        showNotice(modalNotice, "업그레이드 완료!", 900);
+      },
+      ()=> closeConfirm()
+    );
+  });
+
+  // battle home
+  btnBattleHome.addEventListener("click", ()=>{
+    openConfirm("메인화면으로 돌아가겠습니까?", ()=>{
+      closeConfirm();
+      showScreen("main");
+    }, ()=>{
+      closeConfirm();
+    });
+  });
+
+  // 초기
+  screens.upgrade.style.background = ""; // 고급에서 바뀌었을 수 있으니
+  setHidden(modal, true);
+  setHidden(confirm, true);
+  setHidden(reward, true);
   showScreen("main");
-  renderHUD();
-  renderMain();
-  renderShop();
-  renderBox();
-  renderEquip();
+  refreshHUD();
+  renderEquipGrid();
 }
+
+function setActiveTab(tab){
+  $$(".tab").forEach(b=>{
+    b.classList.toggle("active", b.getAttribute("data-tab") === tab);
+  });
+}
+
+/* start */
 init();
