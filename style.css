@@ -16,7 +16,7 @@ html, body {
   color: #ffffff;
 }
 
-/* 이모지 영역 안정화 */
+/* 이모지 안정화 */
 .cardBigEmoji,
 .boxEmoji,
 .slotEmoji,
@@ -368,9 +368,7 @@ html, body {
   cursor: pointer;
 }
 
-.tabBtn.active {
-  background: yellow;
-}
+.tabBtn.active { background: yellow; }
 
 .equipScrollWrap {
   position: absolute;
@@ -404,10 +402,7 @@ html, body {
   cursor: pointer;
 }
 
-.slotEmoji {
-  font-size: 46px;
-  line-height: 1;
-}
+.slotEmoji { font-size: 46px; line-height: 1; }
 
 .slotInnerBlack {
   width: 90px;
@@ -447,9 +442,7 @@ html, body {
   font-weight: 900;
 }
 
-.slotName.maxShift {
-  top: 126px;
-}
+.slotName.maxShift { top: 126px; }
 
 /* ===== 상세 화면 ===== */
 .detailHeader {
@@ -461,16 +454,8 @@ html, body {
   gap: 10px;
 }
 
-.detailHeader .name {
-  font-size: 16px;
-  font-weight: 900;
-}
-
-.detailHeader .sub {
-  font-size: 12px;
-  opacity: 0.9;
-  font-weight: 900;
-}
+.detailHeader .name { font-size: 16px; font-weight: 900; }
+.detailHeader .sub  { font-size: 12px; opacity: 0.9; font-weight: 900; }
 
 .bigBlackChar {
   width: 260px;
@@ -524,10 +509,7 @@ html, body {
 /* InlineConfirm */
 .inlineConfirmWrap {
   position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   display: none;
   align-items: center;
   justify-content: center;
@@ -535,9 +517,7 @@ html, body {
   z-index: 900;
 }
 
-.inlineConfirmWrap.is-open {
-  display: flex;
-}
+.inlineConfirmWrap.is-open { display: flex; }
 
 .inlineCard {
   width: 560px;
