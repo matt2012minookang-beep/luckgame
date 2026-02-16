@@ -153,8 +153,12 @@
   };
 
   const setHidden = (el, hidden) => {
-    el.classList.toggle("hidden", !!hidden);
-  };
+  el.classList.toggle("hidden", !!hidden);
+
+  // ✅ CSS가 꼬여도 나열 안 되게 display 강제
+  el.style.display = hidden ? "none" : "block";
+};
+
 
   const closeModal = () => {
     setHidden(modal, true);
@@ -1251,4 +1255,5 @@
   refreshBox();
   setActiveTab("char");
 })();
+
 
