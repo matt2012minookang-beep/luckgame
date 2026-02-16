@@ -1,6 +1,7 @@
 /* =========================
    운빨겜! - Web Full Version
    ========================= */
+alert("app.js 실행됨");
 
 (() => {
   /** @type {HTMLElement} */
@@ -1255,5 +1256,6 @@
   refreshBox();
   setActiveTab("char");
 })();
+
 
 
