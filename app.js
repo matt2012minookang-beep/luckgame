@@ -1237,7 +1237,11 @@
      Initial (진짜 중요)
   ========================= */
   // ✅ 시작부터 “나열” 절대 안 뜨게 main만 남기고 전부 숨김
-  Object.entries(screens).forEach(([k, el]) => setHidden(el, k !== "main"));
+ Object.entries(screens).forEach(([k, el]) => {
+  const hide = (k !== "main");
+  setHidden(el, hide);
+});
+
   closeModal();
   closeConfirm();
   hideReward();
@@ -1247,3 +1251,4 @@
   refreshBox();
   setActiveTab("char");
 })();
+
