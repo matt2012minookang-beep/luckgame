@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>운빨겜!</title>
 
-  <!-- ✅ CSS가 안 읽혀도 화면이 한꺼번에 보이는 걸 막는 응급장치 -->
+  <!-- ✅ CSS 로드 실패해도 나열 폭발 막는 최소 안전장치 -->
   <style>
     .hidden { display:none !important; }
   </style>
@@ -47,7 +47,6 @@
           <button id="btnEquip" class="btn">장비</button>
         </div>
 
-        <!-- ✅ 나열 문구 제거: 선택 완료되면 JS에서 hidden 처리 -->
         <div class="mt8 subtle" id="needSelectText">캐릭터/주무기 선택 필요</div>
 
         <div class="box-actions mt12">
@@ -117,7 +116,7 @@
     </section>
 
     <!-- =========================
-         CHEST UPGRADES (Normal / Mid / High)
+         CHEST UPGRADES
     ========================== -->
     <section id="screen-upgrade" class="screen theme-pink hidden">
       <div class="screen-inner">
@@ -154,7 +153,7 @@
     </section>
 
     <!-- =========================
-         DETAIL MODAL (Equip detail)
+         DETAIL MODAL
     ========================== -->
     <div id="modal" class="modal hidden">
       <div class="modal-card">
