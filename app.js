@@ -4,7 +4,6 @@ console.log("app.js 진입");
 /* =========================
    운빨겜! - Web Full Version
    ========================= */
-alert("app.js 실행됨");
 
 (() => {
   /** @type {HTMLElement} */
@@ -1259,6 +1258,7 @@ alert("app.js 실행됨");
   refreshBox();
   setActiveTab("char");
 })();
+
 
 
 
