@@ -6,9 +6,21 @@
   <title>운빨겜!</title>
 
   <!-- ✅ CSS 로딩 꼬여도 “나열” 최소화(응급) -->
-  <style>
-    .hidden { display:none !important; }
-  </style>
+ <style>
+  /* ✅ CSS 파일이 로딩이 안 돼도, 기본적으로 화면이 나열되지 않게 강제 */
+  .hidden { display:none !important; }
+
+  /* 모든 screen은 기본 숨김 */
+  section.screen { display:none; }
+
+  /* 시작은 main만 보이기 */
+  #screen-main { display:block; }
+
+  /* 스크롤 자체 차단 */
+  html, body { height:100%; margin:0; overflow:hidden; }
+  #app { height:100vh; overflow:hidden; }
+</style>
+
 
   <link rel="stylesheet" href="./style.css" />
 </head>
@@ -217,3 +229,4 @@
   <script src="./app.js"></script>
 </body>
 </html>
+
